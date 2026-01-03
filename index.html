@@ -469,276 +469,305 @@
     </div>
 
     <script>
-        // ========== 数据配置 ==========
-        // 在这里设置你的图片文件名（保持与GitHub上传的文件名一致）
-        const images = [
-            { name: "第一章 概述.png", number: 1 },
-            { name: "第二章 物质生产民俗.png", number: 2 },
-            { name: "第三章 物质生活民俗.png", number: 3 },
-            { name: "第四章 社会组织民俗.png", number: 4 },
-            { name: "第五章 岁时节日民俗.png", number: 5 },
-            { name: "第六章：人生仪礼.png", number: 6 },
-            { name: "第七章 民俗信仰.png", number: 7 },
-            { name: "第八章 民间科学技术.png", number: 8 },
-            { name: "第九章 民间口头文学（上）.png", number: 9 },
-            { name: "第十章 民间口头文学（下）.png", number: 10 },
-            { name: "第十一章 民间语言.png", number: 11 },
-            { name: "第十二章 民间艺术.png", number: 12 },
-            { name: "第十三章 民间游戏娱乐.png", number: 13 },
-            { name: "第十四章 中国民俗学史略.png", number: 14 },
-            { name: "第十五章 外国民俗学概况.png", number: 15 },
-            { name: "第十六章 民俗学研究方法.png", number: 16 }
-        ];
+// ========== 数据配置 ==========
+// 在这里设置你的图片文件名（保持与GitHub上传的文件名一致）
+const images = [
+    { name: "第一章 概述.png", number: 1 },
+    { name: "第二章 物质生产民俗.png", number: 2 },
+    { name: "第三章 物质生活民俗.png", number: 3 },
+    { name: "第四章 社会组织民俗.png", number: 4 },
+    { name: "第五章 岁时节日民俗.png", number: 5 },
+    { name: "第六章：人生仪礼.png", number: 6 },
+    { name: "第七章 民俗信仰.png", number: 7 },
+    { name: "第八章 民间科学技术.png", number: 8 },
+    { name: "第九章 民间口头文学（上）.png", number: 9 },
+    { name: "第十章 民间口头文学（下）.png", number: 10 },
+    { name: "第十一章 民间语言.png", number: 11 },
+    { name: "第十二章 民间艺术.png", number: 12 },
+    { name: "第十三章 民间游戏娱乐.png", number: 13 },
+    { name: "第十四章 中国民俗学史略.png", number: 14 },
+    { name: "第十五章 外国民俗学概况.png", number: 15 },
+    { name: "第十六章 民俗学研究方法.png", number: 16 }
+];
 
-        // ========== 状态管理 ==========
-        const state = {
-            currentIndex: 0,      // 当前显示的图片索引（0-15）
-            scale: 1,             // 缩放比例
-            translateX: 0,        // X轴位移
-            translateY: 0,        // Y轴位移
-            isDragging: false,    // 是否正在拖拽图片
-            startX: 0,            // 拖拽起始X
-            startY: 0             // 拖拽起始Y
-        };
+// GitHub仓库信息
+const githubRepo = "huohuo87635/mindmap-viewer";
+const branch = "main";
 
-        // ========== DOM元素 ==========
-        const thumbnailsContainer = document.getElementById('thumbnailsContainer');
-        const currentTitle = document.getElementById('currentTitle');
-        const currentImage = document.getElementById('currentImage');
-        const imageContainer = document.getElementById('imageContainer');
-        const zoomDisplay = document.getElementById('zoomDisplay');
-        const pageIndicator = document.getElementById('pageIndicator');
-        const zoomInBtn = document.getElementById('zoomInBtn');
-        const zoomOutBtn = document.getElementById('zoomOutBtn');
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const fullscreenBtn = document.getElementById('fullscreenBtn');
+// 获取图片的完整URL
+function getImageUrl(filename) {
+    // 对文件名进行URL编码（处理中文和特殊字符）
+    const encodedName = encodeURIComponent(filename);
+    return `https://raw.githubusercontent.com/${githubRepo}/${branch}/${encodedName}`;
+}
 
-        // ========== 初始化函数 ==========
-        function init() {
-            console.log("🚀 思维导图查看器初始化...");
-            console.log(`📂 共 ${images.length} 张图片`);
-            
-            // 1. 生成缩略图
-            renderThumbnails();
-            
-            // 2. 加载第一张图片
-            loadImage(0);
-            
-            // 3. 更新页面指示器
-            updatePageIndicator();
-            
-            // 4. 绑定事件监听器
-            setupEventListeners();
-            
-            console.log("✅ 初始化完成！");
-        }
+// ========== 状态管理 ==========
+const state = {
+    currentIndex: 0,      // 当前显示的图片索引（0-15）
+    scale: 1,             // 缩放比例
+    translateX: 0,        // X轴位移
+    translateY: 0,        // Y轴位移
+    isDragging: false,    // 是否正在拖拽图片
+    startX: 0,            // 拖拽起始X
+    startY: 0             // 拖拽起始Y
+};
 
-        // ========== 渲染缩略图 ==========
-        function renderThumbnails() {
-            thumbnailsContainer.innerHTML = '';
-            
-            images.forEach((img, index) => {
-                const thumbnail = document.createElement('div');
-                thumbnail.className = `thumbnail-item ${index === state.currentIndex ? 'active' : ''}`;
-                thumbnail.dataset.index = index;
-                
-                thumbnail.innerHTML = `
-                    <img class="thumbnail-img" src="${img.name}" alt="${img.name}" loading="lazy">
-                    <div class="thumbnail-name">${img.name.replace('.png', '')}</div>
-                    <div class="thumbnail-number">第${img.number}章</div>
-                `;
-                
-                thumbnail.addEventListener('click', () => {
-                    loadImage(index);
-                    updateActiveThumbnail(index);
-                });
-                
-                thumbnailsContainer.appendChild(thumbnail);
-            });
-        }
+// ========== DOM元素 ==========
+const thumbnailsContainer = document.getElementById('thumbnailsContainer');
+const currentTitle = document.getElementById('currentTitle');
+const currentImage = document.getElementById('currentImage');
+const imageContainer = document.getElementById('imageContainer');
+const zoomDisplay = document.getElementById('zoomDisplay');
+const pageIndicator = document.getElementById('pageIndicator');
+const zoomInBtn = document.getElementById('zoomInBtn');
+const zoomOutBtn = document.getElementById('zoomOutBtn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const resetBtn = document.getElementById('resetBtn');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
 
-        // ========== 加载图片 ==========
-        function loadImage(index) {
-            if (index < 0 || index >= images.length) return;
-            
-            state.currentIndex = index;
-            const img = images[index];
-            
-            // 更新大图
-            currentImage.src = img.name;
-            currentImage.alt = img.name;
-            
-            // 更新标题
-            currentTitle.textContent = img.name.replace('.png', '');
-            
-            // 重置视图
-            resetTransform();
-            
-            // 更新页面指示器
-            updatePageIndicator();
-            
-            // 更新激活的缩略图
+// ========== 初始化函数 ==========
+function init() {
+    console.log("🚀 思维导图查看器初始化...");
+    console.log(`📂 共 ${images.length} 张图片`);
+    
+    // 1. 生成缩略图
+    renderThumbnails();
+    
+    // 2. 加载第一张图片
+    loadImage(0);
+    
+    // 3. 更新页面指示器
+    updatePageIndicator();
+    
+    // 4. 绑定事件监听器
+    setupEventListeners();
+    
+    console.log("✅ 初始化完成！");
+}
+
+// ========== 渲染缩略图 ==========
+function renderThumbnails() {
+    thumbnailsContainer.innerHTML = '';
+    
+    images.forEach((img, index) => {
+        const thumbnail = document.createElement('div');
+        thumbnail.className = `thumbnail-item ${index === state.currentIndex ? 'active' : ''}`;
+        thumbnail.dataset.index = index;
+        
+        // 使用data-src属性，稍后加载
+        thumbnail.innerHTML = `
+            <img class="thumbnail-img" data-src="${img.name}" alt="${img.name}" loading="lazy">
+            <div class="thumbnail-name">${img.name.replace('.png', '')}</div>
+            <div class="thumbnail-number">第${img.number}章</div>
+        `;
+        
+        // 点击事件
+        thumbnail.addEventListener('click', () => {
+            loadImage(index);
             updateActiveThumbnail(index);
-            
-            console.log(`📖 切换到: ${img.name}`);
-        }
+        });
+        
+        thumbnailsContainer.appendChild(thumbnail);
+        
+        // 延迟加载缩略图
+        setTimeout(() => {
+            const imgElement = thumbnail.querySelector('.thumbnail-img');
+            if (imgElement) {
+                imgElement.src = getImageUrl(img.name);
+            }
+        }, index * 100); // 延迟加载，避免同时请求太多
+    });
+}
 
-        // ========== 更新激活的缩略图 ==========
-        function updateActiveThumbnail(index) {
-            document.querySelectorAll('.thumbnail-item').forEach((item, i) => {
-                item.classList.toggle('active', i === index);
+// ========== 加载图片 ==========
+function loadImage(index) {
+    if (index < 0 || index >= images.length) return;
+    
+    state.currentIndex = index;
+    const img = images[index];
+    
+    // 显示加载状态
+    currentImage.style.opacity = '0.5';
+    
+    // 更新大图（使用完整URL）
+    const imageUrl = getImageUrl(img.name);
+    console.log(`📥 加载图片: ${imageUrl}`);
+    
+    currentImage.src = imageUrl;
+    currentImage.alt = img.name;
+    
+    // 图片加载完成后的回调
+    currentImage.onload = function() {
+        currentImage.style.opacity = '1';
+        console.log(`✅ 图片加载成功: ${img.name}`);
+    };
+    
+    currentImage.onerror = function() {
+        console.error(`❌ 图片加载失败: ${imageUrl}`);
+        currentImage.style.opacity = '1';
+        alert(`图片加载失败：${img.name}\n请确保图片已上传到GitHub。\n\n如果持续失败，请检查：\n1. 图片文件名是否正确\n2. 图片是否已上传\n3. 网络连接是否正常`);
+    };
+    
+    // 更新标题
+    currentTitle.textContent = img.name.replace('.png', '');
+    
+    // 重置视图
+    resetTransform();
+    
+    // 更新页面指示器
+    updatePageIndicator();
+    
+    // 更新激活的缩略图
+    updateActiveThumbnail(index);
+}
+
+// ========== 更新激活的缩略图 ==========
+function updateActiveThumbnail(index) {
+    document.querySelectorAll('.thumbnail-item').forEach((item, i) => {
+        item.classList.toggle('active', i === index);
+    });
+}
+
+// ========== 更新页面指示器 ==========
+function updatePageIndicator() {
+    const current = state.currentIndex + 1;
+    const total = images.length;
+    pageIndicator.textContent = `${current} / ${total}`;
+}
+
+// ========== 图片变换相关 ==========
+function applyTransform() {
+    currentImage.style.transform = `translate(${state.translateX}px, ${state.translateY}px) scale(${state.scale})`;
+    zoomDisplay.textContent = `${Math.round(state.scale * 100)}%`;
+}
+
+function resetTransform() {
+    state.scale = 1;
+    state.translateX = 0;
+    state.translateY = 0;
+    applyTransform();
+}
+
+// ========== 事件监听器 ==========
+function setupEventListeners() {
+    // 缩放按钮
+    zoomInBtn.addEventListener('click', () => {
+        state.scale = Math.min(state.scale * 1.3, 10);
+        applyTransform();
+    });
+
+    zoomOutBtn.addEventListener('click', () => {
+        state.scale = Math.max(state.scale * 0.7, 0.1);
+        applyTransform();
+    });
+
+    // 导航按钮
+    prevBtn.addEventListener('click', () => {
+        const newIndex = (state.currentIndex - 1 + images.length) % images.length;
+        loadImage(newIndex);
+    });
+
+    nextBtn.addEventListener('click', () => {
+        const newIndex = (state.currentIndex + 1) % images.length;
+        loadImage(newIndex);
+    });
+
+    // 重置按钮
+    resetBtn.addEventListener('click', resetTransform);
+
+    // 全屏按钮
+    fullscreenBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+            imageContainer.requestFullscreen().catch(err => {
+                console.log(`全屏请求失败: ${err.message}`);
             });
+        } else {
+            document.exitFullscreen();
         }
+    });
 
-        // ========== 更新页面指示器 ==========
-        function updatePageIndicator() {
-            const current = state.currentIndex + 1;
-            const total = images.length;
-            pageIndicator.textContent = `${current} / ${total}`;
-        }
+    // 鼠标拖拽
+    imageContainer.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        
+        state.isDragging = true;
+        state.startX = e.clientX - state.translateX;
+        state.startY = e.clientY - state.translateY;
+        imageContainer.classList.add('grabbing');
+        e.preventDefault();
+    });
 
-        // ========== 图片变换相关 ==========
-        function applyTransform() {
-            currentImage.style.transform = `translate(${state.translateX}px, ${state.translateY}px) scale(${state.scale})`;
-            zoomDisplay.textContent = `${Math.round(state.scale * 100)}%`;
-        }
+    document.addEventListener('mousemove', (e) => {
+        if (!state.isDragging) return;
+        
+        state.translateX = e.clientX - state.startX;
+        state.translateY = e.clientY - state.startY;
+        applyTransform();
+    });
 
-        function resetTransform() {
-            state.scale = 1;
-            state.translateX = 0;
-            state.translateY = 0;
-            applyTransform();
-        }
+    document.addEventListener('mouseup', () => {
+        state.isDragging = false;
+        imageContainer.classList.remove('grabbing');
+    });
 
-        // ========== 事件监听器 ==========
-        function setupEventListeners() {
-            // 缩放按钮
-            zoomInBtn.addEventListener('click', () => {
+    // 鼠标滚轮缩放
+    imageContainer.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        
+        const rect = imageContainer.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left - rect.width / 2;
+        const mouseY = e.clientY - rect.top - rect.height / 2;
+        
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        const newScale = state.scale * delta;
+        
+        if (newScale < 0.1 || newScale > 10) return;
+        
+        state.scale = newScale;
+        state.translateX = state.translateX * delta + mouseX * (1 - delta);
+        state.translateY = state.translateY * delta + mouseY * (1 - delta);
+        
+        applyTransform();
+    });
+
+    // 键盘快捷键
+    document.addEventListener('keydown', (e) => {
+        switch(e.key) {
+            case 'ArrowLeft':
+                e.preventDefault();
+                const prevIndex = (state.currentIndex - 1 + images.length) % images.length;
+                loadImage(prevIndex);
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                const nextIndex = (state.currentIndex + 1) % images.length;
+                loadImage(nextIndex);
+                break;
+            case '+':
+            case '=':
+                e.preventDefault();
                 state.scale = Math.min(state.scale * 1.3, 10);
                 applyTransform();
-            });
-
-            zoomOutBtn.addEventListener('click', () => {
+                break;
+            case '-':
+                e.preventDefault();
                 state.scale = Math.max(state.scale * 0.7, 0.1);
                 applyTransform();
-            });
-
-            // 导航按钮
-            prevBtn.addEventListener('click', () => {
-                const newIndex = (state.currentIndex - 1 + images.length) % images.length;
-                loadImage(newIndex);
-            });
-
-            nextBtn.addEventListener('click', () => {
-                const newIndex = (state.currentIndex + 1) % images.length;
-                loadImage(newIndex);
-            });
-
-            // 重置按钮
-            resetBtn.addEventListener('click', resetTransform);
-
-            // 全屏按钮
-            fullscreenBtn.addEventListener('click', () => {
-                if (!document.fullscreenElement) {
-                    imageContainer.requestFullscreen().catch(err => {
-                        console.log(`全屏请求失败: ${err.message}`);
-                    });
-                } else {
-                    document.exitFullscreen();
-                }
-            });
-
-            // 鼠标拖拽
-            imageContainer.addEventListener('mousedown', (e) => {
-                if (e.button !== 0) return;
-                
-                state.isDragging = true;
-                state.startX = e.clientX - state.translateX;
-                state.startY = e.clientY - state.translateY;
-                imageContainer.classList.add('grabbing');
+                break;
+            case '0':
                 e.preventDefault();
-            });
-
-            document.addEventListener('mousemove', (e) => {
-                if (!state.isDragging) return;
-                
-                state.translateX = e.clientX - state.startX;
-                state.translateY = e.clientY - state.startY;
-                applyTransform();
-            });
-
-            document.addEventListener('mouseup', () => {
-                state.isDragging = false;
-                imageContainer.classList.remove('grabbing');
-            });
-
-            // 鼠标滚轮缩放
-            imageContainer.addEventListener('wheel', (e) => {
+                resetTransform();
+                break;
+            case 'f':
+            case 'F':
                 e.preventDefault();
-                
-                const rect = imageContainer.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left - rect.width / 2;
-                const mouseY = e.clientY - rect.top - rect.height / 2;
-                
-                const delta = e.deltaY > 0 ? 0.9 : 1.1;
-                const newScale = state.scale * delta;
-                
-                if (newScale < 0.1 || newScale > 10) return;
-                
-                state.scale = newScale;
-                state.translateX = state.translateX * delta + mouseX * (1 - delta);
-                state.translateY = state.translateY * delta + mouseY * (1 - delta);
-                
-                applyTransform();
-            });
-
-            // 键盘快捷键
-            document.addEventListener('keydown', (e) => {
-                switch(e.key) {
-                    case 'ArrowLeft':
-                        e.preventDefault();
-                        const prevIndex = (state.currentIndex - 1 + images.length) % images.length;
-                        loadImage(prevIndex);
-                        break;
-                    case 'ArrowRight':
-                        e.preventDefault();
-                        const nextIndex = (state.currentIndex + 1) % images.length;
-                        loadImage(nextIndex);
-                        break;
-                    case '+':
-                    case '=':
-                        e.preventDefault();
-                        state.scale = Math.min(state.scale * 1.3, 10);
-                        applyTransform();
-                        break;
-                    case '-':
-                        e.preventDefault();
-                        state.scale = Math.max(state.scale * 0.7, 0.1);
-                        applyTransform();
-                        break;
-                    case '0':
-                        e.preventDefault();
-                        resetTransform();
-                        break;
-                    case 'f':
-                    case 'F':
-                        e.preventDefault();
-                        fullscreenBtn.click();
-                        break;
-                }
-            });
+                fullscreenBtn.click();
+                break;
         }
+    });
+}
 
-        // ========== 启动应用 ==========
-        document.addEventListener('DOMContentLoaded', init);
-        
-        // 错误处理：如果图片加载失败
-        currentImage.addEventListener('error', function() {
-            console.error(`❌ 图片加载失败: ${this.src}`);
-            alert(`图片加载失败：${this.src}\n请确保图片已上传到GitHub并且文件名正确。`);
-        });
-    </script>
-</body>
-</html>
+// ========== 启动应用 ==========
+document.addEventListener('DOMContentLoaded', init);
+
