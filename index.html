@@ -1,266 +1,173 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <title>思维导图管理器（拖拽排序+删除）</title>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>民俗学思维导图高清查看器</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: #333;
-            line-height: 1.6;
+            color: #2c3e50;
             min-height: 100vh;
             padding: 20px;
+            line-height: 1.6;
         }
+        
         .container {
             max-width: 1400px;
             margin: 0 auto;
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
+            border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
         }
+        
         header {
             text-align: center;
             margin-bottom: 30px;
             padding-bottom: 20px;
             border-bottom: 2px solid #eaeaea;
         }
+        
         h1 {
             color: #2c3e50;
+            font-size: 2.8em;
             margin-bottom: 10px;
-            font-size: 2.5em;
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
-        /* 上传区域 */
-        .upload-section {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 30px;
-            border: 2px dashed #bdc3c7;
-            transition: all 0.3s;
-        }
-        .upload-btn {
-            background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            border-radius: 50px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            justify-content: center;
-        }
-        .upload-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
-        }
-        #fileInput {
-            display: none;
-        }
-        .upload-info {
-            text-align: center;
-            margin-top: 15px;
+        .subtitle {
             color: #7f8c8d;
-            font-size: 14px;
+            font-size: 1.2em;
+            margin-bottom: 20px;
         }
         
-        /* 图片管理区域 */
-        .management-section {
-            display: none;
+        .chapter-counter {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        /* 缩略图区域 */
+        .thumbnail-section {
             margin-bottom: 30px;
         }
-        .section-title {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        .section-title h2 {
-            color: #2c3e50;
+        
+        .thumbnail-title {
             font-size: 1.5em;
-        }
-        .action-buttons {
+            color: #2c3e50;
+            margin-bottom: 20px;
             display: flex;
+            align-items: center;
             gap: 10px;
         }
-        .action-btn {
-            background: #f8f9fa;
-            border: 1px solid #ddd;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s;
-        }
-        .action-btn:hover {
-            background: #e9ecef;
-        }
-        .action-btn.delete-all {
-            background: #ffeaea;
-            border-color: #ffb3b3;
-            color: #d63031;
-        }
-        .action-btn.delete-all:hover {
-            background: #ffd6d6;
+        
+        .thumbnail-title::before {
+            content: "📚";
+            font-size: 1.3em;
         }
         
-        /* 可拖拽的图片列表 */
-        .sortable-list {
-            min-height: 200px;
-            border: 2px dashed #e0e0e0;
-            border-radius: 10px;
-            padding: 15px;
-            background: #fdfdfd;
+        .thumbnails-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
-        .sortable-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            margin-bottom: 10px;
+        
+        .thumbnail-item {
             background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            cursor: move;
-            transition: all 0.3s;
-            position: relative;
-            user-select: none;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
         }
-        .sortable-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        
+        .thumbnail-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
             border-color: #3498db;
         }
-        .sortable-item.dragging {
-            opacity: 0.6;
-            background: #f8f9fa;
-            border-style: dashed;
-        }
-        .sortable-item.active {
+        
+        .thumbnail-item.active {
             border-color: #2ecc71;
             background: #f0fff4;
         }
-        .drag-handle {
-            width: 24px;
-            height: 24px;
-            margin-right: 12px;
-            color: #95a5a6;
-            cursor: move;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        
+        .thumbnail-img {
+            width: 100%;
+            height: 120px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #eee;
         }
-        .drag-handle::after {
-            content: '⋮⋮';
-            font-size: 18px;
-            letter-spacing: -3px;
-        }
-        .item-preview {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 6px;
-            margin-right: 15px;
-            border: 2px solid #f0f0f0;
-        }
-        .item-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .item-name {
+        
+        .thumbnail-name {
             font-weight: 500;
-            margin-bottom: 4px;
-            white-space: nowrap;
+            font-size: 14px;
+            color: #2c3e50;
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        .item-size {
+        
+        .thumbnail-number {
             font-size: 12px;
             color: #7f8c8d;
-        }
-        .item-index {
-            position: absolute;
-            top: -8px;
-            left: -8px;
-            background: #3498db;
-            color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(52, 152, 219, 0.3);
-        }
-        .delete-btn {
-            background: #ffeaea;
-            border: 1px solid #ffb3b3;
-            color: #d63031;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-            margin-left: 10px;
-        }
-        .delete-btn:hover {
-            background: #ffcccc;
-            transform: scale(1.1);
+            margin-top: 5px;
         }
         
-        /* 拖拽占位符 */
-        .sortable-placeholder {
-            height: 90px;
-            background: #f8f9fa;
-            border: 2px dashed #3498db;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            opacity: 0.5;
-        }
-        
-        /* 查看器区域 */
+        /* 高清查看区域 */
         .viewer-section {
-            display: none;
             background: #1a1a2e;
-            border-radius: 15px;
+            border-radius: 20px;
             padding: 25px;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+        
+        .viewer-title {
+            color: white;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .image-container {
             position: relative;
             width: 100%;
             height: 70vh;
+            min-height: 500px;
             background: #0d0d1a;
-            border-radius: 10px;
+            border-radius: 15px;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: grab;
-            user-select: none;
-            touch-action: none;
         }
         
         .image-container.grabbing {
@@ -279,17 +186,17 @@
         /* 控制面板 */
         .control-panel {
             position: absolute;
-            bottom: 25px;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(10px);
             border-radius: 50px;
-            padding: 10px 20px;
+            padding: 12px 25px;
             display: flex;
             align-items: center;
-            gap: 15px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            gap: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
             z-index: 100;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
@@ -297,24 +204,24 @@
         .control-group {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 0 10px;
+            gap: 10px;
+            padding: 0 15px;
         }
         
         .control-group:not(:last-child) {
             border-right: 1px solid rgba(255, 255, 255, 0.15);
-            padding-right: 20px;
+            padding-right: 25px;
         }
         
         .control-btn {
             background: transparent;
             color: white;
             border: none;
-            width: 44px;
-            height: 44px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 22px;
+            font-size: 24px;
             transition: all 0.2s;
             display: flex;
             align-items: center;
@@ -332,56 +239,155 @@
             color: white;
         }
         
+        .control-btn.primary:hover {
+            background: #2980b9;
+        }
+        
         .zoom-display {
             color: white;
-            font-size: 15px;
+            font-size: 16px;
             font-weight: bold;
-            min-width: 70px;
+            min-width: 80px;
             text-align: center;
-            padding: 8px 15px;
+            padding: 10px 20px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
+            border-radius: 25px;
         }
         
-        /* 状态提示 */
-        .status-message {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(44, 62, 80, 0.95);
+        .page-indicator {
             color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            min-width: 100px;
+            text-align: center;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+        }
+        
+        /* 操作说明 */
+        .instructions {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            border-left: 5px solid #3498db;
+        }
+        
+        .instructions h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .instructions h3::before {
+            content: "🎯";
+        }
+        
+        .instruction-item {
+            margin-bottom: 12px;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .instruction-item::before {
+            content: "•";
+            color: #3498db;
+            font-size: 20px;
+            position: absolute;
+            left: 0;
+            top: -2px;
+        }
+        
+        /* 键盘快捷键提示 */
+        .shortcuts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .shortcut-item {
+            background: white;
+            padding: 8px 15px;
+            border-radius: 20px;
             font-size: 14px;
-            max-width: 300px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
-        .status-message.show {
-            opacity: 1;
+        .key {
+            background: #2c3e50;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-weight: bold;
         }
         
-        /* 响应式 */
+        /* 响应式设计 */
         @media (max-width: 768px) {
-            .container { padding: 15px; }
-            h1 { font-size: 1.8em; }
-            .sortable-item {
-                padding: 10px;
+            .container {
+                padding: 15px;
             }
-            .item-preview {
-                width: 50px;
-                height: 50px;
+            
+            h1 {
+                font-size: 2em;
             }
-            .action-buttons {
-                flex-direction: column;
-                width: 100%;
+            
+            .thumbnails-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
             }
-            .action-btn {
-                width: 100%;
+            
+            .control-panel {
+                flex-wrap: wrap;
                 justify-content: center;
+                border-radius: 20px;
+                padding: 15px;
+                gap: 15px;
+                bottom: 20px;
+                width: 90%;
+            }
+            
+            .control-group {
+                padding: 0 10px;
+            }
+            
+            .control-group:not(:last-child) {
+                padding-right: 10px;
+            }
+            
+            .image-container {
+                height: 60vh;
+                min-height: 400px;
+            }
+            
+            .control-btn {
+                width: 44px;
+                height: 44px;
+                font-size: 22px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .thumbnails-container {
+                grid-template-columns: repeat(1, 1fr);
+            }
+            
+            .control-panel {
+                flex-direction: column;
+                gap: 10px;
+                border-radius: 15px;
+            }
+            
+            .control-group {
+                border-right: none !important;
+                padding-right: 0 !important;
             }
         }
     </style>
@@ -389,43 +395,23 @@
 <body>
     <div class="container">
         <header>
-            <h1>🧠 思维导图管理器</h1>
-            <p class="subtitle">拖拽排序 • 删除功能 • 高清查看</p>
+            <h1>📚 民俗学思维导图高清查看器</h1>
+            <p class="subtitle">高清查看 · 章节导航 · 支持缩放拖拽</p>
+            <div class="chapter-counter">共16章</div>
         </header>
-
-        <!-- 上传区域 -->
-        <section class="upload-section">
-            <button class="upload-btn" id="uploadBtn">
-                <span>📁 点击添加思维导图图片</span>
-            </button>
-            <input type="file" id="fileInput" accept="image/*" multiple>
-            <div class="upload-info">
-                <p>支持 PNG、JPG、WebP 格式，可多选</p>
-                <p id="fileCount">还没有添加图片</p>
+        
+        <!-- 缩略图区域 -->
+        <section class="thumbnail-section">
+            <h2 class="thumbnail-title">所有章节</h2>
+            <div class="thumbnails-container" id="thumbnailsContainer">
+                <!-- 缩略图将通过JavaScript动态生成 -->
             </div>
         </section>
-
-        <!-- 图片管理区域 -->
-        <section class="management-section" id="managementSection">
-            <div class="section-title">
-                <h2>📋 图片管理</h2>
-                <div class="action-buttons">
-                    <button class="action-btn" id="saveOrderBtn">
-                        <span>💾</span> 保存顺序
-                    </button>
-                    <button class="action-btn delete-all" id="deleteAllBtn">
-                        <span>🗑️</span> 全部删除
-                    </button>
-                </div>
-            </div>
+        
+        <!-- 高清查看区域 -->
+        <section class="viewer-section">
+            <h2 class="viewer-title" id="currentTitle">请点击上方的章节查看高清大图</h2>
             
-            <div class="sortable-list" id="sortableList">
-                <!-- 可拖拽的图片项将在这里动态生成 -->
-            </div>
-        </section>
-
-        <!-- 查看器区域 -->
-        <section class="viewer-section" id="viewerSection">
             <div class="image-container" id="imageContainer">
                 <img id="currentImage" alt="当前查看的思维导图">
             </div>
@@ -442,365 +428,183 @@
                 </div>
                 
                 <div class="control-group">
-                    <button class="control-btn" id="resetBtn" title="重置">
-                        <span>⟳</span>
+                    <button class="control-btn" id="prevBtn" title="上一章">
+                        <span>❮</span>
+                    </button>
+                    <div class="page-indicator" id="pageIndicator">- / 16</div>
+                    <button class="control-btn" id="nextBtn" title="下一章">
+                        <span>❯</span>
                     </button>
                 </div>
                 
                 <div class="control-group">
-                    <button class="control-btn" id="prevBtn" title="上一张">
-                        <span>❮</span>
+                    <button class="control-btn" id="resetBtn" title="重置视图">
+                        <span>⟳</span>
                     </button>
-                    <button class="control-btn" id="nextBtn" title="下一张">
-                        <span>❯</span>
+                    <button class="control-btn" id="fullscreenBtn" title="全屏">
+                        <span>⛶</span>
                     </button>
                 </div>
             </div>
         </section>
         
         <!-- 操作说明 -->
-        <div style="text-align: center; margin-top: 30px; color: #666; padding: 20px; background: #f8f9fa; border-radius: 10px;">
-            <p><strong>🎯 操作说明：</strong></p>
-            <p>1. <strong>拖拽排序</strong>：抓住图片左侧的"⋮⋮"图标上下拖动调整顺序</p>
-            <p>2. <strong>删除图片</strong>：点击图片右侧的红色删除按钮</p>
-            <p>3. <strong>查看图片</strong>：点击图片项即可查看大图</p>
-            <p>4. <strong>保存顺序</strong>：调整顺序后点击"保存顺序"按钮</p>
-            <p>5. <strong>全部删除</strong>：一键清空所有图片</p>
+        <div class="instructions">
+            <h3>操作说明</h3>
+            <div class="instruction-item"><strong>查看图片：</strong>点击上方的缩略图查看高清大图</div>
+            <div class="instruction-item"><strong>放大缩小：</strong>使用 + - 按钮或鼠标滚轮</div>
+            <div class="instruction-item"><strong>拖拽查看：</strong>按住图片拖动查看细节</div>
+            <div class="instruction-item"><strong>切换章节：</strong>使用左右箭头或键盘左右方向键</div>
+            <div class="instruction-item"><strong>重置视图：</strong>点击⟳按钮恢复原始大小</div>
+            
+            <div class="shortcuts">
+                <div class="shortcut-item"><span class="key">←</span> 上一章</div>
+                <div class="shortcut-item"><span class="key">→</span> 下一章</div>
+                <div class="shortcut-item"><span class="key">+</span> 放大</div>
+                <div class="shortcut-item"><span class="key">-</span> 缩小</div>
+                <div class="shortcut-item"><span class="key">0</span> 重置</div>
+                <div class="shortcut-item"><span class="key">F</span> 全屏</div>
+            </div>
         </div>
     </div>
 
-    <div class="status-message" id="statusMessage">准备就绪</div>
-
     <script>
-        // 状态管理
+        // ========== 数据配置 ==========
+        // 在这里设置你的图片文件名（保持与GitHub上传的文件名一致）
+        const images = [
+            { name: "第一章 概述.png", number: 1 },
+            { name: "第二章 物质生产民俗.png", number: 2 },
+            { name: "第三章 物质生活民俗.png", number: 3 },
+            { name: "第四章 社会组织民俗.png", number: 4 },
+            { name: "第五章 岁时节日民俗.png", number: 5 },
+            { name: "第六章：人生仪礼.png", number: 6 },
+            { name: "第七章 民俗信仰.png", number: 7 },
+            { name: "第八章 民间科学技术.png", number: 8 },
+            { name: "第九章 民间口头文学（上）.png", number: 9 },
+            { name: "第十章 民间口头文学（下）.png", number: 10 },
+            { name: "第十一章 民间语言.png", number: 11 },
+            { name: "第十二章 民间艺术.png", number: 12 },
+            { name: "第十三章 民间游戏娱乐.png", number: 13 },
+            { name: "第十四章 中国民俗学史略.png", number: 14 },
+            { name: "第十五章 外国民俗学概况.png", number: 15 },
+            { name: "第十六章 民俗学研究方法.png", number: 16 }
+        ];
+
+        // ========== 状态管理 ==========
         const state = {
-            images: [],
-            currentIndex: -1,
-            scale: 1,
-            translateX: 0,
-            translateY: 0,
-            isDragging: false,
-            startX: 0,
-            startY: 0,
-            dragItem: null,
-            dragStartIndex: 0
+            currentIndex: 0,      // 当前显示的图片索引（0-15）
+            scale: 1,             // 缩放比例
+            translateX: 0,        // X轴位移
+            translateY: 0,        // Y轴位移
+            isDragging: false,    // 是否正在拖拽图片
+            startX: 0,            // 拖拽起始X
+            startY: 0             // 拖拽起始Y
         };
 
-        // DOM元素
-        const uploadBtn = document.getElementById('uploadBtn');
-        const fileInput = document.getElementById('fileInput');
-        const fileCount = document.getElementById('fileCount');
-        const managementSection = document.getElementById('managementSection');
-        const sortableList = document.getElementById('sortableList');
-        const saveOrderBtn = document.getElementById('saveOrderBtn');
-        const deleteAllBtn = document.getElementById('deleteAllBtn');
-        const viewerSection = document.getElementById('viewerSection');
+        // ========== DOM元素 ==========
+        const thumbnailsContainer = document.getElementById('thumbnailsContainer');
+        const currentTitle = document.getElementById('currentTitle');
         const currentImage = document.getElementById('currentImage');
+        const imageContainer = document.getElementById('imageContainer');
         const zoomDisplay = document.getElementById('zoomDisplay');
+        const pageIndicator = document.getElementById('pageIndicator');
         const zoomInBtn = document.getElementById('zoomInBtn');
         const zoomOutBtn = document.getElementById('zoomOutBtn');
-        const resetBtn = document.getElementById('resetBtn');
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
-        const imageContainer = document.getElementById('imageContainer');
-        const statusMessage = document.getElementById('statusMessage');
+        const resetBtn = document.getElementById('resetBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
 
-        // 显示状态消息
-        function showStatus(message, duration = 3000) {
-            statusMessage.textContent = message;
-            statusMessage.classList.add('show');
+        // ========== 初始化函数 ==========
+        function init() {
+            console.log("🚀 思维导图查看器初始化...");
+            console.log(`📂 共 ${images.length} 张图片`);
             
-            setTimeout(() => {
-                statusMessage.classList.remove('show');
-            }, duration);
+            // 1. 生成缩略图
+            renderThumbnails();
+            
+            // 2. 加载第一张图片
+            loadImage(0);
+            
+            // 3. 更新页面指示器
+            updatePageIndicator();
+            
+            // 4. 绑定事件监听器
+            setupEventListeners();
+            
+            console.log("✅ 初始化完成！");
         }
 
-        // 更新文件计数
-        function updateFileCount() {
-            fileCount.textContent = state.images.length === 0 
-                ? '还没有添加图片' 
-                : `已添加 ${state.images.length} 张图片`;
-        }
-
-        // 触发文件选择
-        uploadBtn.addEventListener('click', () => {
-            fileInput.click();
-        });
-
-        // 文件选择变化
-        fileInput.addEventListener('change', function(e) {
-            const files = Array.from(this.files);
-            if (files.length === 0) return;
+        // ========== 渲染缩略图 ==========
+        function renderThumbnails() {
+            thumbnailsContainer.innerHTML = '';
             
-            showStatus(`正在添加 ${files.length} 张图片...`);
-            
-            files.forEach((file, index) => {
-                if (!file.type.startsWith('image/')) {
-                    showStatus(`跳过非图片文件: ${file.name}`);
-                    return;
-                }
+            images.forEach((img, index) => {
+                const thumbnail = document.createElement('div');
+                thumbnail.className = `thumbnail-item ${index === state.currentIndex ? 'active' : ''}`;
+                thumbnail.dataset.index = index;
                 
-                const reader = new FileReader();
-                
-                reader.onload = function(event) {
-                    state.images.push({
-                        id: Date.now() + index,
-                        name: file.name,
-                        size: formatFileSize(file.size),
-                        dataUrl: event.target.result
-                    });
-                    
-                    updateFileCount();
-                    renderImageList();
-                    showManagementSection();
-                    
-                    if (state.currentIndex === -1 && state.images.length > 0) {
-                        state.currentIndex = 0;
-                        showImage(0);
-                        showViewer();
-                    }
-                };
-                
-                reader.onerror = function() {
-                    showStatus(`读取失败: ${file.name}`, 5000);
-                };
-                
-                reader.readAsDataURL(file);
-            });
-            
-            this.value = ''; // 清空input，允许重复选择相同文件
-        });
-
-        // 格式化文件大小
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 B';
-            const k = 1024;
-            const sizes = ['B', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        // 渲染可拖拽的图片列表
-        function renderImageList() {
-            sortableList.innerHTML = '';
-            
-            if (state.images.length === 0) {
-                managementSection.style.display = 'none';
-                viewerSection.style.display = 'none';
-                return;
-            }
-            
-            state.images.forEach((img, index) => {
-                const item = document.createElement('div');
-                item.className = `sortable-item ${index === state.currentIndex ? 'active' : ''}`;
-                item.dataset.index = index;
-                item.draggable = true;
-                
-                item.innerHTML = `
-                    <div class="item-index">${index + 1}</div>
-                    <div class="drag-handle" title="拖拽调整顺序"></div>
-                    <img class="item-preview" src="${img.dataUrl}" alt="${img.name}">
-                    <div class="item-info">
-                        <div class="item-name">${img.name}</div>
-                        <div class="item-size">${img.size}</div>
-                    </div>
-                    <button class="delete-btn" title="删除这张图片" data-index="${index}">
-                        <span>×</span>
-                    </button>
+                thumbnail.innerHTML = `
+                    <img class="thumbnail-img" src="${img.name}" alt="${img.name}" loading="lazy">
+                    <div class="thumbnail-name">${img.name.replace('.png', '')}</div>
+                    <div class="thumbnail-number">第${img.number}章</div>
                 `;
                 
-                // 点击查看图片
-                item.addEventListener('click', (e) => {
-                    if (!e.target.classList.contains('delete-btn') && 
-                        !e.target.classList.contains('drag-handle') &&
-                        e.target.parentNode !== item.querySelector('.delete-btn')) {
-                        showImage(index);
-                    }
+                thumbnail.addEventListener('click', () => {
+                    loadImage(index);
+                    updateActiveThumbnail(index);
                 });
                 
-                // 拖拽开始
-                item.addEventListener('dragstart', (e) => {
-                    state.dragItem = item;
-                    state.dragStartIndex = index;
-                    setTimeout(() => {
-                        item.classList.add('dragging');
-                    }, 0);
-                });
-                
-                // 拖拽结束
-                item.addEventListener('dragend', () => {
-                    item.classList.remove('dragging');
-                    state.dragItem = null;
-                    updateItemIndexes();
-                });
-                
-                sortableList.appendChild(item);
-            });
-            
-            // 删除按钮事件
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const index = parseInt(btn.dataset.index);
-                    deleteImage(index);
-                });
-            });
-            
-            // 拖拽事件
-            setupDragAndDrop();
-        }
-
-        // 设置拖拽排序
-        function setupDragAndDrop() {
-            const items = sortableList.querySelectorAll('.sortable-item');
-            
-            items.forEach(item => {
-                // 拖拽经过
-                item.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    const draggingItem = document.querySelector('.dragging');
-                    if (!draggingItem) return;
-                    
-                    const siblings = [...sortableList.querySelectorAll('.sortable-item:not(.dragging)')];
-                    const nextSibling = siblings.find(sibling => {
-                        return e.clientY <= sibling.offsetTop + sibling.offsetHeight / 2;
-                    });
-                    
-                    sortableList.insertBefore(draggingItem, nextSibling);
-                });
-                
-                // 放置
-                item.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    if (!state.dragItem) return;
-                    
-                    // 更新数组顺序
-                    const newIndex = getNewIndex(state.dragItem);
-                    if (newIndex !== -1) {
-                        const [movedItem] = state.images.splice(state.dragStartIndex, 1);
-                        state.images.splice(newIndex, 0, movedItem);
-                        
-                        // 如果删除的是当前查看的图片，更新索引
-                        if (state.currentIndex === state.dragStartIndex) {
-                            state.currentIndex = newIndex;
-                        } else if (state.currentIndex > state.dragStartIndex && state.currentIndex <= newIndex) {
-                            state.currentIndex--;
-                        } else if (state.currentIndex < state.dragStartIndex && state.currentIndex >= newIndex) {
-                            state.currentIndex++;
-                        }
-                        
-                        updateItemIndexes();
-                        showStatus(`已调整图片顺序`);
-                    }
-                });
+                thumbnailsContainer.appendChild(thumbnail);
             });
         }
 
-        // 获取新位置索引
-        function getNewIndex(draggingItem) {
-            const items = [...sortableList.querySelectorAll('.sortable-item:not(.dragging)')];
-            return items.indexOf(draggingItem);
-        }
-
-        // 更新所有项目的序号
-        function updateItemIndexes() {
-            const items = sortableList.querySelectorAll('.sortable-item');
-            items.forEach((item, index) => {
-                const indexElement = item.querySelector('.item-index');
-                if (indexElement) {
-                    indexElement.textContent = index + 1;
-                }
-                item.dataset.index = index;
-                
-                // 更新删除按钮的索引
-                const deleteBtn = item.querySelector('.delete-btn');
-                if (deleteBtn) {
-                    deleteBtn.dataset.index = index;
-                }
-                
-                // 更新激活状态
-                item.classList.toggle('active', index === state.currentIndex);
-            });
-        }
-
-        // 显示管理区域
-        function showManagementSection() {
-            managementSection.style.display = 'block';
-        }
-
-        // 显示图片
-        function showImage(index) {
-            if (state.images.length === 0 || index < 0 || index >= state.images.length) return;
+        // ========== 加载图片 ==========
+        function loadImage(index) {
+            if (index < 0 || index >= images.length) return;
             
             state.currentIndex = index;
-            currentImage.src = state.images[index].dataUrl;
+            const img = images[index];
+            
+            // 更新大图
+            currentImage.src = img.name;
+            currentImage.alt = img.name;
+            
+            // 更新标题
+            currentTitle.textContent = img.name.replace('.png', '');
             
             // 重置视图
             resetTransform();
             
-            // 更新激活状态
-            document.querySelectorAll('.sortable-item').forEach((item, i) => {
+            // 更新页面指示器
+            updatePageIndicator();
+            
+            // 更新激活的缩略图
+            updateActiveThumbnail(index);
+            
+            console.log(`📖 切换到: ${img.name}`);
+        }
+
+        // ========== 更新激活的缩略图 ==========
+        function updateActiveThumbnail(index) {
+            document.querySelectorAll('.thumbnail-item').forEach((item, i) => {
                 item.classList.toggle('active', i === index);
             });
-            
-            showStatus(`查看第 ${index + 1} 张: ${state.images[index].name}`);
         }
 
-        // 删除图片
-        function deleteImage(index) {
-            if (state.images.length === 0 || index < 0 || index >= state.images.length) return;
-            
-            const imageName = state.images[index].name;
-            state.images.splice(index, 1);
-            
-            // 更新当前索引
-            if (state.images.length === 0) {
-                state.currentIndex = -1;
-                viewerSection.style.display = 'none';
-            } else if (state.currentIndex >= index) {
-                state.currentIndex = Math.max(0, state.currentIndex - 1);
-                showImage(state.currentIndex);
-            }
-            
-            updateFileCount();
-            renderImageList();
-            
-            if (state.images.length === 0) {
-                managementSection.style.display = 'none';
-            }
-            
-            showStatus(`已删除: ${imageName}`);
+        // ========== 更新页面指示器 ==========
+        function updatePageIndicator() {
+            const current = state.currentIndex + 1;
+            const total = images.length;
+            pageIndicator.textContent = `${current} / ${total}`;
         }
 
-        // 保存顺序
-        saveOrderBtn.addEventListener('click', () => {
-            showStatus('顺序已保存', 2000);
-        });
-
-        // 全部删除
-        deleteAllBtn.addEventListener('click', () => {
-            if (state.images.length === 0) {
-                showStatus('没有图片可删除', 2000);
-                return;
-            }
-            
-            if (confirm(`确定要删除全部 ${state.images.length} 张图片吗？`)) {
-                state.images = [];
-                state.currentIndex = -1;
-                updateFileCount();
-                managementSection.style.display = 'none';
-                viewerSection.style.display = 'none';
-                showStatus('已删除所有图片');
-            }
-        });
-
-        // 应用变换
+        // ========== 图片变换相关 ==========
         function applyTransform() {
             currentImage.style.transform = `translate(${state.translateX}px, ${state.translateY}px) scale(${state.scale})`;
             zoomDisplay.textContent = `${Math.round(state.scale * 100)}%`;
         }
 
-        // 重置变换
         function resetTransform() {
             state.scale = 1;
             state.translateX = 0;
@@ -808,135 +612,133 @@
             applyTransform();
         }
 
-        // 显示查看器
-        function showViewer() {
-            viewerSection.style.display = 'block';
+        // ========== 事件监听器 ==========
+        function setupEventListeners() {
+            // 缩放按钮
+            zoomInBtn.addEventListener('click', () => {
+                state.scale = Math.min(state.scale * 1.3, 10);
+                applyTransform();
+            });
+
+            zoomOutBtn.addEventListener('click', () => {
+                state.scale = Math.max(state.scale * 0.7, 0.1);
+                applyTransform();
+            });
+
+            // 导航按钮
+            prevBtn.addEventListener('click', () => {
+                const newIndex = (state.currentIndex - 1 + images.length) % images.length;
+                loadImage(newIndex);
+            });
+
+            nextBtn.addEventListener('click', () => {
+                const newIndex = (state.currentIndex + 1) % images.length;
+                loadImage(newIndex);
+            });
+
+            // 重置按钮
+            resetBtn.addEventListener('click', resetTransform);
+
+            // 全屏按钮
+            fullscreenBtn.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    imageContainer.requestFullscreen().catch(err => {
+                        console.log(`全屏请求失败: ${err.message}`);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            });
+
+            // 鼠标拖拽
+            imageContainer.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                
+                state.isDragging = true;
+                state.startX = e.clientX - state.translateX;
+                state.startY = e.clientY - state.translateY;
+                imageContainer.classList.add('grabbing');
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!state.isDragging) return;
+                
+                state.translateX = e.clientX - state.startX;
+                state.translateY = e.clientY - state.startY;
+                applyTransform();
+            });
+
+            document.addEventListener('mouseup', () => {
+                state.isDragging = false;
+                imageContainer.classList.remove('grabbing');
+            });
+
+            // 鼠标滚轮缩放
+            imageContainer.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                
+                const rect = imageContainer.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left - rect.width / 2;
+                const mouseY = e.clientY - rect.top - rect.height / 2;
+                
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                const newScale = state.scale * delta;
+                
+                if (newScale < 0.1 || newScale > 10) return;
+                
+                state.scale = newScale;
+                state.translateX = state.translateX * delta + mouseX * (1 - delta);
+                state.translateY = state.translateY * delta + mouseY * (1 - delta);
+                
+                applyTransform();
+            });
+
+            // 键盘快捷键
+            document.addEventListener('keydown', (e) => {
+                switch(e.key) {
+                    case 'ArrowLeft':
+                        e.preventDefault();
+                        const prevIndex = (state.currentIndex - 1 + images.length) % images.length;
+                        loadImage(prevIndex);
+                        break;
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        const nextIndex = (state.currentIndex + 1) % images.length;
+                        loadImage(nextIndex);
+                        break;
+                    case '+':
+                    case '=':
+                        e.preventDefault();
+                        state.scale = Math.min(state.scale * 1.3, 10);
+                        applyTransform();
+                        break;
+                    case '-':
+                        e.preventDefault();
+                        state.scale = Math.max(state.scale * 0.7, 0.1);
+                        applyTransform();
+                        break;
+                    case '0':
+                        e.preventDefault();
+                        resetTransform();
+                        break;
+                    case 'f':
+                    case 'F':
+                        e.preventDefault();
+                        fullscreenBtn.click();
+                        break;
+                }
+            });
         }
 
-        // 按钮事件
-        zoomInBtn.addEventListener('click', () => {
-            state.scale = Math.min(state.scale * 1.3, 10);
-            applyTransform();
-        });
-
-        zoomOutBtn.addEventListener('click', () => {
-            state.scale = Math.max(state.scale * 0.7, 0.1);
-            applyTransform();
-        });
-
-        resetBtn.addEventListener('click', () => {
-            resetTransform();
-        });
-
-        prevBtn.addEventListener('click', () => {
-            if (state.images.length === 0) return;
-            const newIndex = (state.currentIndex - 1 + state.images.length) % state.images.length;
-            showImage(newIndex);
-        });
-
-        nextBtn.addEventListener('click', () => {
-            if (state.images.length === 0) return;
-            const newIndex = (state.currentIndex + 1) % state.images.length;
-            showImage(newIndex);
-        });
-
-        // 鼠标拖拽功能
-        imageContainer.addEventListener('mousedown', (e) => {
-            if (state.images.length === 0) return;
-            if (e.button !== 0) return;
-            
-            state.isDragging = true;
-            state.startX = e.clientX - state.translateX;
-            state.startY = e.clientY - state.translateY;
-            imageContainer.classList.add('grabbing');
-            e.preventDefault();
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (!state.isDragging || state.images.length === 0) return;
-            
-            state.translateX = e.clientX - state.startX;
-            state.translateY = e.clientY - state.startY;
-            applyTransform();
-        });
-
-        document.addEventListener('mouseup', () => {
-            state.isDragging = false;
-            imageContainer.classList.remove('grabbing');
-        });
-
-        // 鼠标滚轮缩放
-        imageContainer.addEventListener('wheel', (e) => {
-            if (state.images.length === 0) return;
-            e.preventDefault();
-            
-            const rect = imageContainer.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left - rect.width / 2;
-            const mouseY = e.clientY - rect.top - rect.height / 2;
-            
-            const delta = e.deltaY > 0 ? 0.9 : 1.1;
-            const newScale = state.scale * delta;
-            
-            if (newScale < 0.1 || newScale > 10) return;
-            
-            state.scale = newScale;
-            state.translateX = state.translateX * delta + mouseX * (1 - delta);
-            state.translateY = state.translateY * delta + mouseY * (1 - delta);
-            
-            applyTransform();
-        });
-
-        // 键盘快捷键
-        document.addEventListener('keydown', (e) => {
-            if (state.images.length === 0) return;
-            
-            switch(e.key) {
-                case 'ArrowLeft':
-                    e.preventDefault();
-                    const prevIndex = (state.currentIndex - 1 + state.images.length) % state.images.length;
-                    showImage(prevIndex);
-                    break;
-                case 'ArrowRight':
-                    e.preventDefault();
-                    const nextIndex = (state.currentIndex + 1) % state.images.length;
-                    showImage(nextIndex);
-                    break;
-                case '+':
-                case '=':
-                    e.preventDefault();
-                    state.scale = Math.min(state.scale * 1.3, 10);
-                    applyTransform();
-                    break;
-                case '-':
-                    e.preventDefault();
-                    state.scale = Math.max(state.scale * 0.7, 0.1);
-                    applyTransform();
-                    break;
-                case '0':
-                    e.preventDefault();
-                    resetTransform();
-                    break;
-                case 'Delete':
-                case 'Backspace':
-                    e.preventDefault();
-                    if (state.currentIndex >= 0) {
-                        deleteImage(state.currentIndex);
-                    }
-                    break;
-            }
-        });
-
-        // 初始状态
-        showStatus('准备就绪，请添加图片开始管理');
+        // ========== 启动应用 ==========
+        document.addEventListener('DOMContentLoaded', init);
         
-        console.log('✅ 图片管理器已初始化');
-        console.log('✨ 新增功能：');
-        console.log('1. 拖拽排序：抓住"⋮⋮"图标上下拖动调整顺序');
-        console.log('2. 删除功能：每张图片都有删除按钮');
-        console.log('3. 全部删除：一键清空所有图片');
-        console.log('4. 保存顺序：可保存调整后的顺序');
-        console.log('5. 快捷键：Delete键删除当前图片');
+        // 错误处理：如果图片加载失败
+        currentImage.addEventListener('error', function() {
+            console.error(`❌ 图片加载失败: ${this.src}`);
+            alert(`图片加载失败：${this.src}\n请确保图片已上传到GitHub并且文件名正确。`);
+        });
     </script>
 </body>
-
 </html>
