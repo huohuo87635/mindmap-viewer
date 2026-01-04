@@ -1,3 +1,17 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <!-- 关键修改：移动端viewport优化 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>民俗学思维导图高清查看器</title>
+    <style>
+        /* ... 保持你的CSS样式不变 ... */
+    </style>
+</head>
+<body>
+    <!-- ... 保持HTML结构不变 ... -->
+
     <script>
 // ========== 使用数字文件名 ==========
 const imageFiles = [
@@ -6,7 +20,7 @@ const imageFiles = [
     "11.png", "12.png", "13.png", "14.png", "15.png", "16.png"
 ];
 
-// 章节名称映射（用于显示中文标题）
+// 章节名称映射
 const chapterNames = {
     "01.png": "第一章 概述",
     "02.png": "第二章 物质生产民俗", 
@@ -36,7 +50,8 @@ const state = {
     isDragging: false,
     startX: 0,
     startY: 0,
-    isLoading: false // 新增：用于防止重复加载
+    lastTouchDistance: 0,  // 新增：用于触摸缩放
+    isLoading: false       // 新增：防止重复加载
 };
 
 // DOM元素
@@ -47,88 +62,66 @@ const elements = {
     imageContainer: document.getElementById('imageContainer'),
     zoomDisplay: document.getElementById('zoomDisplay'),
     pageIndicator: document.getElementById('pageIndicator'),
+    zoomInBtn: document.getElementById('zoomInBtn'),
+    zoomOutBtn: document.getElementById('zoomOutBtn'),
+    prevBtn: document.getElementById('prevBtn'),
+    nextBtn: document.getElementById('nextBtn'),
+    resetBtn: document.getElementById('resetBtn'),
+    fullscreenBtn: document.getElementById('fullscreenBtn'),
     chapterCounter: document.getElementById('chapterCounter'),
-    controlPanel: document.querySelector('.control-panel'),
-    loadingText: document.querySelector('#imageContainer > div') // 获取加载提示文字
+    controlPanel: document.querySelector('.control-panel')
 };
 
-// ========== 核心修复：使用最稳定的图片URL ==========
+// ========== 核心修复：使用移动端友好的URL格式 ==========
 function init() {
-    console.log("🧠 查看器初始化 (移动端优化版)...");
+    console.log("🧠 移动端优化版查看器初始化...");
     
-    // 1. 处理图片列表 - 关键修改：使用公开仓库的标准Raw链接
+    // 修复：使用更稳定的GitHub URL格式
     state.images = imageFiles.map((filename) => {
         const chapterNum = parseInt(filename.replace('.png', ''));
+        const baseName = filename.replace('.png', '');
+        
+        // 关键修改：使用多种URL格式，提高兼容性
         return {
             name: chapterNames[filename] || filename,
             number: chapterNum,
-            // ！！！ 核心修改：使用稳定、标准的 raw.githubusercontent.com 链接 ！！！
-            url: `https://raw.githubusercontent.com/huohuo87635/mindmap-viewer/main/${filename}`,
-            // 备用URL：可以留空，或使用其他备用图床
-            backupUrl: '', // 暂时不需要备用
+            // 主URL：GitHub Pages直接访问
+            url: `https://huohuo87635.github.io/mindmap-viewer/${filename}`,
+            // 备用URL1：raw.githubusercontent.com（最稳定）
+            backupUrl1: `https://raw.githubusercontent.com/huohuo87635/mindmap-viewer/main/${filename}`,
+            // 备用URL2：GitHub raw content
+            backupUrl2: `https://github.com/huohuo87635/mindmap-viewer/raw/main/${filename}`,
+            // 备用URL3：带blob参数
+            backupUrl3: `https://github.com/huohuo87635/mindmap-viewer/blob/main/${filename}?raw=true`,
             filename: filename
         };
     });
     
-    console.log(`✅ 共 ${state.images.length} 张图片，使用标准Raw链接`);
+    console.log(`✅ 共 ${state.images.length} 张图片，使用移动端优化URL`);
     
-    // 2. 更新章节计数
+    // 更新章节计数
     elements.chapterCounter.textContent = `共${state.images.length}章`;
     
-    // 3. 生成缩略图
+    // 生成缩略图
     renderThumbnails();
     
-    // 4. 加载第一张图片
+    // 加载第一张图片
     if (state.images.length > 0) {
-        loadImage(0);
-    } else {
-        showError('未找到可用的图片文件');
+        loadImageWithRetry(0);
     }
     
-    // 5. 绑定事件
+    // 启用控制面板
+    elements.controlPanel.style.opacity = '1';
+    elements.controlPanel.style.pointerEvents = 'auto';
+    
+    // 绑定事件监听器
     setupEventListeners();
     
-    console.log("✅ 初始化完成！");
+    console.log("✅ 移动端优化初始化完成！");
 }
 
-// ========== 渲染缩略图 ==========
-function renderThumbnails() {
-    elements.thumbnailsContainer.innerHTML = '';
-    
-    state.images.forEach((img, index) => {
-        const thumbnail = document.createElement('div');
-        thumbnail.className = `thumbnail-item ${index === state.currentIndex ? 'active' : ''}`;
-        thumbnail.dataset.index = index;
-        
-        thumbnail.innerHTML = `
-            <img class="thumbnail-img" 
-                 data-src="${img.url}" 
-                 alt="${img.name}"
-                 loading="lazy">
-            <div class="thumbnail-name">${img.name}</div>
-            <div class="thumbnail-number">第${img.number}章</div>
-        `;
-        
-        thumbnail.addEventListener('click', () => {
-            if (state.isLoading) return; // 防止加载中重复点击
-            loadImage(index);
-            updateActiveThumbnail(index);
-        });
-        
-        elements.thumbnailsContainer.appendChild(thumbnail);
-        
-        // 延迟加载缩略图
-        setTimeout(() => {
-            const imgEl = thumbnail.querySelector('.thumbnail-img');
-            if (imgEl && imgEl.dataset.src) {
-                imgEl.src = imgEl.dataset.src;
-            }
-        }, index * 100);
-    });
-}
-
-// ========== 核心优化：增强的图片加载函数 (解决移动端问题) ==========
-function loadImage(index) {
+// ========== 增强的图片加载函数（支持重试）==========
+async function loadImageWithRetry(index) {
     if (state.isLoading) return;
     
     state.currentIndex = index;
@@ -136,107 +129,343 @@ function loadImage(index) {
     state.isLoading = true;
     
     // 显示加载状态
-    if (elements.loadingText) {
-        elements.loadingText.textContent = '加载中，请稍候...';
-        elements.loadingText.style.display = 'block';
-    }
     elements.currentImage.style.display = 'none';
-    elements.currentImage.style.opacity = '0';
+    const loadingText = elements.imageContainer.querySelector('div');
+    if (loadingText) {
+        loadingText.style.display = 'block';
+        loadingText.textContent = '加载中...';
+    }
     
     console.log(`📱 加载: ${img.name}`);
     
-    // 清除之前的超时和事件
-    if (window._imgLoadTimeout) clearTimeout(window._imgLoadTimeout);
+    // 尝试多个URL
+    const urlsToTry = [
+        img.url + '?t=' + Date.now(),  // 主URL
+        img.backupUrl1 + '?t=' + Date.now(),  // 备用1
+        img.backupUrl2 + '?t=' + Date.now(),  // 备用2
+        img.backupUrl3  // 备用3
+    ];
     
-    // 设置加载超时（移动端网络不稳定，设为20秒）
-    window._imgLoadTimeout = setTimeout(() => {
-        console.warn(`⏰ 加载超时: ${img.name}`);
-        if (elements.currentImage.src.includes(img.url)) {
-            handleImageError(img, '网络超时，请检查连接');
+    let success = false;
+    
+    for (let i = 0; i < urlsToTry.length; i++) {
+        try {
+            console.log(`尝试URL ${i+1}: ${urlsToTry[i].substring(0, 60)}...`);
+            success = await loadSingleImage(img, urlsToTry[i]);
+            if (success) break;
+        } catch (error) {
+            console.warn(`URL ${i+1} 失败:`, error.message);
         }
-    }, 20000);
+    }
     
-    // 创建新的Image对象预加载（更可靠）
-    const loader = new Image();
-    loader.crossOrigin = 'anonymous'; // 避免CORS问题
+    if (!success) {
+        showLoadError(img);
+    }
     
-    loader.onload = function() {
-        clearTimeout(window._imgLoadTimeout);
-        state.isLoading = false;
-        
-        // 将加载好的图片赋给显示元素
-        elements.currentImage.src = this.src;
-        elements.currentImage.alt = img.name;
-        elements.currentImage.style.display = 'block';
-        
-        // 淡入效果
-        setTimeout(() => {
-            elements.currentImage.style.opacity = '1';
-            if (elements.loadingText) {
-                elements.loadingText.style.display = 'none';
-            }
-        }, 50);
-        
-        console.log(`✅ 加载成功: ${img.name}`);
-        updateUI(img);
-    };
-    
-    loader.onerror = function() {
-        clearTimeout(window._imgLoadTimeout);
-        handleImageError(img, '图片加载失败');
-    };
-    
-    // 开始加载（添加时间戳避免缓存）
-    loader.src = img.url + '?t=' + Date.now();
-}
-
-// ========== 错误处理 ==========
-function handleImageError(img, message) {
     state.isLoading = false;
-    console.error(`❌ ${message}: ${img.name}`);
-    
-    if (elements.loadingText) {
-        elements.loadingText.innerHTML = `❌ ${message}<br>点击重试`;
-        elements.loadingText.style.display = 'block';
-        elements.loadingText.onclick = () => loadImage(state.currentIndex);
-    }
-    
-    elements.currentImage.style.display = 'none';
-    
-    // 3秒后自动重试一次
-    setTimeout(() => {
-        if (state.currentIndex === state.images.indexOf(img)) {
-            console.log('🔄 自动重试加载...');
-            loadImage(state.currentIndex);
-        }
-    }, 3000);
 }
 
-function showError(msg) {
-    if (elements.loadingText) {
-        elements.loadingText.innerHTML = `❌ ${msg}`;
-        elements.loadingText.style.display = 'block';
-    }
-}
-
-// ========== 更新界面 ==========
-function updateUI(img) {
-    elements.currentTitle.textContent = img.name;
-    elements.pageIndicator.textContent = `${state.currentIndex + 1} / ${state.images.length}`;
-    updateActiveThumbnail(state.currentIndex);
-    resetTransform(); // 加载新图后重置缩放和位置
-}
-
-function updateActiveThumbnail(index) {
-    document.querySelectorAll('.thumbnail-item').forEach((item, i) => {
-        item.classList.toggle('active', i === index);
+function loadSingleImage(img, url) {
+    return new Promise((resolve) => {
+        const tempImg = new Image();
+        tempImg.crossOrigin = 'anonymous';  // 避免CORS问题
+        
+        const timeout = setTimeout(() => {
+            tempImg.onload = tempImg.onerror = null;
+            resolve(false);
+        }, 10000);  // 10秒超时
+        
+        tempImg.onload = function() {
+            clearTimeout(timeout);
+            console.log(`✅ 图片加载成功: ${img.name} (${url.substring(0, 40)}...)`);
+            
+            // 更新显示图片
+            elements.currentImage.src = url;
+            elements.currentImage.alt = img.name;
+            elements.currentImage.style.display = 'block';
+            elements.currentImage.style.opacity = '0';
+            
+            // 淡入效果
+            setTimeout(() => {
+                elements.currentImage.style.opacity = '1';
+            }, 50);
+            
+            // 隐藏加载提示
+            const loadingText = elements.imageContainer.querySelector('div');
+            if (loadingText) loadingText.style.display = 'none';
+            
+            // 更新UI
+            elements.currentTitle.textContent = img.name;
+            updatePageIndicator();
+            updateActiveThumbnail(state.currentIndex);
+            resetTransform();
+            
+            resolve(true);
+        };
+        
+        tempImg.onerror = function() {
+            clearTimeout(timeout);
+            console.warn(`❌ 图片加载失败: ${url.substring(0, 40)}...`);
+            resolve(false);
+        };
+        
+        tempImg.src = url;
     });
 }
 
-// ========== 图片变换相关 ==========
+function showLoadError(img) {
+    console.error(`❌ 所有URL都失败: ${img.name}`);
+    elements.currentTitle.textContent = `❌ 加载失败: ${img.name}`;
+    
+    const loadingText = elements.imageContainer.querySelector('div');
+    if (loadingText) {
+        loadingText.innerHTML = `
+            <div style="color: #ff6b6b; font-size: 16px; padding: 20px;">
+                <div style="font-size: 48px; margin-bottom: 10px;">😢</div>
+                <strong>图片加载失败</strong><br>
+                ${img.filename}<br><br>
+                <button onclick="loadImageWithRetry(${state.currentIndex})" 
+                        style="background: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                    点击重试
+                </button>
+            </div>
+        `;
+    }
+}
+
+// ========== 渲染缩略图（优化移动端）==========
+function renderThumbnails() {
+    elements.thumbnailsContainer.innerHTML = '';
+    
+    // 移动端优化：显示加载提示
+    if (state.images.length === 0) {
+        elements.thumbnailsContainer.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #666; grid-column: 1 / -1;">
+                <div style="font-size: 48px; margin-bottom: 10px;">⏳</div>
+                正在加载图片列表...
+            </div>
+        `;
+        return;
+    }
+    
+    state.images.forEach((img, index) => {
+        const thumbnail = document.createElement('div');
+        thumbnail.className = `thumbnail-item ${index === state.currentIndex ? 'active' : ''}`;
+        thumbnail.dataset.index = index;
+        
+        // 移动端优化：使用低质量占位图
+        thumbnail.innerHTML = `
+            <div class="thumbnail-img-placeholder" 
+                 style="width: 100%; height: 120px; background: linear-gradient(135deg, #f5f7fa, #c3cfe2); 
+                        border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 24px;">📚</span>
+            </div>
+            <div class="thumbnail-name">${img.name}</div>
+            <div class="thumbnail-number">第${img.number}章</div>
+        `;
+        
+        // 点击事件（移动端优化）
+        thumbnail.addEventListener('click', (e) => {
+            if (state.isLoading) return;
+            e.preventDefault();
+            loadImageWithRetry(index);
+            updateActiveThumbnail(index);
+            
+            // 移动端点击后滚动到顶部
+            if (window.innerWidth <= 768) {
+                document.querySelector('.viewer-section').scrollIntoView({ 
+                    behavior: 'smooth' 
+                });
+            }
+        });
+        
+        // 触摸事件支持
+        thumbnail.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+        
+        elements.thumbnailsContainer.appendChild(thumbnail);
+        
+        // 延迟加载真实缩略图
+        setTimeout(() => {
+            const placeholder = thumbnail.querySelector('.thumbnail-img-placeholder');
+            if (placeholder) {
+                placeholder.innerHTML = `<img class="thumbnail-img" 
+                    src="${img.url}" 
+                    alt="${img.name}"
+                    loading="lazy"
+                    style="width: 100%; height: 120px; object-fit: contain; border-radius: 8px;"
+                    onerror="this.src='data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><text y=\".9em\" font-size=\"90\">📷</text></svg>;'">`;
+            }
+        }, index * 100);
+    });
+}
+
+// ========== 移动端触摸事件支持 ==========
+function setupEventListeners() {
+    // 按钮事件（保持原有）
+    elements.zoomInBtn.addEventListener('click', handleZoomIn);
+    elements.zoomOutBtn.addEventListener('click', handleZoomOut);
+    elements.prevBtn.addEventListener('click', handlePrev);
+    elements.nextBtn.addEventListener('click', handleNext);
+    elements.resetBtn.addEventListener('click', resetTransform);
+    elements.fullscreenBtn.addEventListener('click', toggleFullscreen);
+    
+    // 移动端触摸拖拽
+    setupTouchEvents();
+    
+    // 键盘快捷键
+    setupKeyboardEvents();
+}
+
+function setupTouchEvents() {
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isTouchMoving = false;
+    
+    // 触摸开始
+    elements.imageContainer.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            isTouchMoving = true;
+            
+            // 如果是快速滑动（切换章节）
+            state.touchStartTime = Date.now();
+        } else if (e.touches.length === 2) {
+            // 双指缩放开始
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            state.lastTouchDistance = Math.hypot(
+                touch1.clientX - touch2.clientX,
+                touch1.clientY - touch2.clientY
+            );
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    // 触摸移动
+    elements.imageContainer.addEventListener('touchmove', (e) => {
+        if (isTouchMoving && e.touches.length === 1) {
+            const touch = e.touches[0];
+            const deltaX = touch.clientX - touchStartX;
+            const deltaY = touch.clientY - touchStartY;
+            
+            // 如果是拖拽（移动距离较大）
+            if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
+                state.translateX += deltaX;
+                state.translateY += deltaY;
+                applyTransform();
+                
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                e.preventDefault();
+            }
+        } else if (e.touches.length === 2) {
+            // 双指缩放
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            const currentDistance = Math.hypot(
+                touch1.clientX - touch2.clientX,
+                touch1.clientY - touch2.clientY
+            );
+            
+            if (state.lastTouchDistance > 0) {
+                const scaleFactor = currentDistance / state.lastTouchDistance;
+                handleZoom(scaleFactor, 
+                    (touch1.clientX + touch2.clientX) / 2,
+                    (touch1.clientY + touch2.clientY) / 2
+                );
+            }
+            
+            state.lastTouchDistance = currentDistance;
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    // 触摸结束
+    elements.imageContainer.addEventListener('touchend', (e) => {
+        if (isTouchMoving && state.touchStartTime) {
+            const touchDuration = Date.now() - state.touchStartTime;
+            const touch = e.changedTouches[0];
+            const deltaX = touch.clientX - touchStartX;
+            
+            // 快速滑动切换章节（仅水平方向）
+            if (touchDuration < 300 && Math.abs(deltaX) > 50) {
+                if (deltaX > 0) {
+                    // 向右滑动：上一章
+                    handlePrev();
+                } else {
+                    // 向左滑动：下一章
+                    handleNext();
+                }
+            }
+        }
+        
+        isTouchMoving = false;
+        state.lastTouchDistance = 0;
+        state.touchStartTime = null;
+    });
+    
+    // 阻止移动端默认行为
+    elements.imageContainer.addEventListener('touchmove', (e) => {
+        if (e.scale !== 1) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+}
+
+// ========== 辅助函数 ==========
+function handleZoomIn() {
+    state.scale = Math.min(state.scale * 1.3, 10);
+    applyTransform();
+}
+
+function handleZoomOut() {
+    state.scale = Math.max(state.scale * 0.7, 0.1);
+    applyTransform();
+}
+
+function handlePrev() {
+    const newIndex = (state.currentIndex - 1 + state.images.length) % state.images.length;
+    loadImageWithRetry(newIndex);
+}
+
+function handleNext() {
+    const newIndex = (state.currentIndex + 1) % state.images.length;
+    loadImageWithRetry(newIndex);
+}
+
+function handleZoom(delta, clientX, clientY) {
+    const rect = elements.imageContainer.getBoundingClientRect();
+    const mouseX = clientX - rect.left - rect.width / 2;
+    const mouseY = clientY - rect.top - rect.height / 2;
+    
+    const newScale = state.scale * delta;
+    if (newScale < 0.1 || newScale > 10) return;
+    
+    // 计算缩放中心点偏移
+    const scaleDiff = newScale - state.scale;
+    state.translateX -= (mouseX * scaleDiff) / state.scale;
+    state.translateY -= (mouseY * scaleDiff) / state.scale;
+    
+    state.scale = newScale;
+    applyTransform();
+}
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+            console.warn(`全屏请求失败: ${err.message}`);
+        });
+    } else {
+        document.exitFullscreen();
+    }
+}
+
 function applyTransform() {
-    elements.currentImage.style.transform = 
-        `translate(${state.translateX}px, ${state.translateY}px) scale(${state.scale})`;
+    elements.currentImage.style.transform = `translate(${state.translateX}px, ${state.translateY}px) scale(${state.scale})`;
     elements.zoomDisplay.textContent = `${Math.round(state.scale * 100)}%`;
 }
 
@@ -247,149 +476,72 @@ function resetTransform() {
     applyTransform();
 }
 
-// ========== 核心优化：增强的事件监听器 (支持移动端触摸) ==========
-function setupEventListeners() {
-    // 控制按钮
-    document.getElementById('zoomInBtn').addEventListener('click', () => {
-        state.scale = Math.min(state.scale * 1.3, 10);
-        applyTransform();
-    });
-    
-    document.getElementById('zoomOutBtn').addEventListener('click', () => {
-        state.scale = Math.max(state.scale * 0.7, 0.1);
-        applyTransform();
-    });
-    
-    document.getElementById('prevBtn').addEventListener('click', () => {
-        const newIndex = (state.currentIndex - 1 + state.images.length) % state.images.length;
-        loadImage(newIndex);
-    });
-    
-    document.getElementById('nextBtn').addEventListener('click', () => {
-        const newIndex = (state.currentIndex + 1) % state.images.length;
-        loadImage(newIndex);
-    });
-    
-    document.getElementById('resetBtn').addEventListener('click', resetTransform);
-    
-    document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
-    
-    // 鼠标/触摸拖拽
-    setupDragEvents();
-    
-    // 缩放（鼠标滚轮和触摸手势）
-    setupZoomEvents();
-    
-    // 键盘快捷键（仅桌面端）
-    setupKeyboardEvents();
-    
-    // 启用控制面板
-    elements.controlPanel.style.opacity = '1';
-    elements.controlPanel.style.pointerEvents = 'auto';
+function updatePageIndicator() {
+    const current = state.currentIndex + 1;
+    const total = state.images.length;
+    elements.pageIndicator.textContent = `${current} / ${total}`;
 }
 
-function setupDragEvents() {
-    let isTouchDragging = false;
-    
-    // 鼠标事件
-    elements.imageContainer.addEventListener('mousedown', (e) => {
-        if (e.button !== 0) return;
-        startDrag(e.clientX, e.clientY);
-        elements.imageContainer.classList.add('grabbing');
-        e.preventDefault();
+function updateActiveThumbnail(index) {
+    document.querySelectorAll('.thumbnail-item').forEach((item, i) => {
+        item.classList.toggle('active', i === index);
     });
-    
-    // 触摸事件 - 移动端关键！
-    elements.imageContainer.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 1) {
-            const touch = e.touches[0];
-            startDrag(touch.clientX, touch.clientY);
-            isTouchDragging = true;
-            e.preventDefault();
+}
+
+function setupKeyboardEvents() {
+    document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        switch(e.key) {
+            case 'ArrowLeft': handlePrev(); break;
+            case 'ArrowRight': handleNext(); break;
+            case '+': case '=': handleZoomIn(); break;
+            case '-': handleZoomOut(); break;
+            case '0': resetTransform(); break;
+            case 'f': case 'F': toggleFullscreen(); break;
         }
     });
+}
+
+// ========== 启动应用 ==========
+// 等待DOM完全加载
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("🚀 移动端优化版查看器启动");
     
-    function startDrag(clientX, clientY) {
-        state.isDragging = true;
-        state.startX = clientX - state.translateX;
-        state.startY = clientY - state.translateY;
+    // 检查是否是移动设备
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    console.log(`📱 设备检测: ${isMobile ? '移动设备' : '桌面设备'}`);
+    
+    // 如果是移动设备，添加一些额外优化
+    if (isMobile) {
+        // 移除不必要的动画以提升性能
+        document.querySelectorAll('*').forEach(el => {
+            if (el.style.transition) el.style.transition = 'none';
+        });
+        
+        // 禁用双指缩放页面（防止浏览器默认行为）
+        document.addEventListener('touchmove', (e) => {
+            if (e.scale !== 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
     }
     
-    // 移动/拖拽
-    document.addEventListener('mousemove', (e) => {
-        if (!state.isDragging) return;
-        state.translateX = e.clientX - state.startX;
-        state.translateY = e.clientY - state.startY;
-        applyTransform();
-    });
-    
-    document.addEventListener('touchmove', (e) => {
-        if (!state.isDragging || !isTouchDragging || e.touches.length !== 1) return;
-        const touch = e.touches[0];
-        state.translateX = touch.clientX - state.startX;
-        state.translateY = touch.clientY - state.startY;
-        applyTransform();
-        e.preventDefault();
-    });
-    
-    // 结束拖拽
-    const endDrag = () => {
-        state.isDragging = false;
-        isTouchDragging = false;
-        elements.imageContainer.classList.remove('grabbing');
-    };
-    
-    document.addEventListener('mouseup', endDrag);
-    document.addEventListener('touchend', endDrag);
-    document.addEventListener('touchcancel', endDrag);
-}
+    // 初始化应用
+    setTimeout(init, 100);
+});
 
-function setupZoomEvents() {
-    // 鼠标滚轮
-    elements.imageContainer.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        handleZoom(e.deltaY > 0 ? 0.9 : 1.1, e.clientX, e.clientY);
-    });
-    
-    // 移动端双指缩放（基础实现）
-    let initialDistance = 0;
-    elements.imageContainer.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 2) {
-            initialDistance = Math.hypot(
-                e.touches[0].clientX - e.touches[1].clientX,
-                e.touches[0].clientY - e.touches[1].clientY
-            );
-            e.preventDefault();
-        }
-    });
-    
-    elements.imageContainer.addEventListener('touchmove', (e) => {
-        if (e.touches.length === 2 && initialDistance > 0) {
-            const currentDistance = Math.hypot(
-                e.touches[0].clientX - e.touches[1].clientX,
-                e.touches[0].clientY - e.touches[1].clientY
-            );
-            const scaleFactor = currentDistance / initialDistance;
-            const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-            const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-            
-            handleZoom(scaleFactor, centerX, centerY);
-            initialDistance = currentDistance;
-            e.preventDefault();
-        }
-    });
-    
-    elements.imageContainer.addEventListener('touchend', (e) => {
-        if (e.touches.length < 2) {
-            initialDistance = 0;
-        }
-    });
-}
+// 窗口大小变化时重置视图
+window.addEventListener('resize', () => {
+    if (state.currentIndex >= 0) {
+        resetTransform();
+    }
+});
 
-function handleZoom(delta, clientX, clientY) {
-    const rect = elements.imageContainer.getBoundingClientRect();
-    const mouseX = clientX - rect.left - rect.width / 2;
-    const mouseY = clientY - rect.top - rect.height / 2;
-    
-    const newScale = state.scale * delta;
-    if (
+// 控制台提示
+console.log("✨ 移动端优化版民俗学思维导图查看器");
+console.log("📚 支持触摸、拖拽、缩放、全屏");
+console.log("🔧 使用多URL重试机制提高加载成功率");
+    </script>
+</body>
+</html>
