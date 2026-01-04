@@ -475,25 +475,32 @@
     </div>
 
     <script>
-// ========== 使用100%正确的文件名 ==========
+// ========== 使用数字文件名 ==========
 const imageFiles = [
-    "第一章 概述.png",
-    "第二章 物质生产民俗.png",
-    "第三章 物质生活民俗.png",
-    "第四章 社会组织民俗.png",
-    "第五章 岁时节日民俗.png",
-    "第六章：人生仪礼.png",
-    "第七章 民俗信仰.png",
-    "第八章 民间科学技术.png",
-    "第九章 民间口头文学（上）.png",
-    "第十章 民间口头文学（下）.png",
-    "第十一章 民间语言.png",
-    "第十二章 民间艺术.png",
-    "第十三章 民间游戏娱乐.png",
-    "第十四章 中国民俗学史略.png",
-    "第十五章 外国民俗学概况.png",
-    "第十六章 民俗学研究方法.png"
+    "01.png", "02.png", "03.png", "04.png", "05.png",
+    "06.png", "07.png", "08.png", "09.png", "10.png",
+    "11.png", "12.png", "13.png", "14.png", "15.png", "16.png"
 ];
+
+// 章节名称映射（用于显示中文标题）
+const chapterNames = {
+    "01.png": "第一章 概述",
+    "02.png": "第二章 物质生产民俗", 
+    "03.png": "第三章 物质生活民俗",
+    "04.png": "第四章 社会组织民俗",
+    "05.png": "第五章 节日民间习俗",
+    "06.png": "第六章 人生仪礼",
+    "07.png": "第七章 民俗信仰",
+    "08.png": "第八章 民间科学技术",
+    "09.png": "第九章 民间文学（上）",
+    "10.png": "第十章 民间文学（下）",
+    "11.png": "第十一章 民间语言",
+    "12.png": "第十二章 民间艺术",
+    "13.png": "第十三章 民间游戏娱乐",
+    "14.png": "第十四章 中国民俗学史略",
+    "15.png": "第十五章 外国民俗学概况",
+    "16.png": "第十六章 民俗学研究方法"
+};
 
 // ========== 状态管理 ==========
 const state = {
@@ -529,17 +536,18 @@ function init() {
     
     // 1. 处理图片列表，添加章节号和URL
     state.images = imageFiles.map((filename) => {
-        const chapterNum = extractChapterNumber(filename);
+        const chapterNum = parseInt(filename.replace('.png', '')); // 直接提取数字
         return {
-            name: filename,
+            name: chapterNames[filename] || filename, // 使用映射的中文名
             number: chapterNum,
-            url: `https://raw.githubusercontent.com/huohuo87635/mindmap-viewer/main/${encodeURIComponent(filename)}`,
-            backupUrl: `https://huohuo87635.github.io/mindmap-viewer/${encodeURIComponent(filename)}`
+            url: `https://raw.githubusercontent.com/huohuo87635/mindmap-viewer/main/${filename}`,
+            backupUrl: `https://huohuo87635.github.io/mindmap-viewer/${filename}`,
+            filename: filename // 保存实际文件名
         };
-    }).sort((a, b) => a.number - b.number); // 按章节号排序
+    });
     
     console.log(`✅ 共 ${state.images.length} 张图片`);
-    console.log("排序后的图片列表:", state.images.map(img => `${img.number}. ${img.name}`));
+    console.log("图片列表:", state.images.map(img => `${img.number}. ${img.name}`));
     
     // 2. 更新标题显示章节数
     chapterCounter.textContent = `共${state.images.length}章`;
@@ -562,21 +570,10 @@ function init() {
     console.log("✅ 初始化完成！");
 }
 
-// 提取章节号
+// 提取章节号（简化版本）
 function extractChapterNumber(filename) {
-    // 匹配中文数字：第一章、第二章...
-    const match = filename.match(/第([零一二三四五六七八九十]+)章/);
-    if (match) {
-        const chineseNum = match[1];
-        const map = {
-            '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
-            '六': 6, '七': 7, '八': 8, '九': 9, '十': 10,
-            '十一': 11, '十二': 12, '十三': 13, '十四': 14,
-            '十五': 15, '十六': 16
-        };
-        return map[chineseNum] || 0;
-    }
-    return 0;
+    const match = filename.match(/(\d+)\.png/);
+    return match ? parseInt(match[1]) : 0;
 }
 
 // ========== 渲染缩略图 ==========
@@ -592,10 +589,10 @@ function renderThumbnails() {
         thumbnail.innerHTML = `
             <img class="thumbnail-img" 
                  data-src="${img.url}" 
-                 alt="${img.name.replace('.png', '')}"
+                 alt="${img.name}"
                  loading="lazy"
                  onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><text y=\".9em\" font-size=\"90\">📷</text></svg>'">
-            <div class="thumbnail-name">${img.name.replace('.png', '')}</div>
+            <div class="thumbnail-name">${img.name}</div>
             <div class="thumbnail-number">第${img.number}章</div>
         `;
         
@@ -633,7 +630,7 @@ function loadImage(index) {
     currentImage.style.opacity = '0.5';
     
     // 更新大图
-    console.log(`📥 加载图片: ${img.name}`);
+    console.log(`📥 加载图片: ${img.name} (${img.filename})`);
     currentImage.src = img.url;
     currentImage.alt = img.name;
     
@@ -651,12 +648,12 @@ function loadImage(index) {
         currentImage.onerror = function() {
             console.error(`❌ 备用URL也失败`);
             currentImage.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">❌</text></svg>';
-            alert(`无法加载图片：${img.name}\n\n请直接访问图片链接检查：\n${img.url}`);
+            alert(`无法加载图片：${img.name}\n\n文件名：${img.filename}\n请检查GitHub仓库中是否存在该文件。`);
         };
     };
     
     // 更新标题
-    currentTitle.textContent = img.name.replace('.png', '');
+    currentTitle.textContent = img.name;
     
     // 重置视图
     resetTransform();
@@ -819,9 +816,9 @@ document.addEventListener('DOMContentLoaded', init);
 
 // 控制台提示
 console.log("🚀 民俗学思维导图查看器已加载");
-console.log("📚 使用100%正确的文件名");
+console.log("📚 使用数字文件名：01.png - 16.png");
 console.log("✨ 功能：高清查看、缩放、拖拽、全屏");
-console.log("🎯 访问地址: https://mindmap-viewer.vercel.app");
+console.log("🎯 访问地址: https://huohuo87635.github.io/mindmap-viewer/");
     </script>
 </body>
 </html>
