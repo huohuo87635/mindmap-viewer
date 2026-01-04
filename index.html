@@ -534,20 +534,23 @@ const controlPanel = document.querySelector('.control-panel');
 function init() {
     console.log("🧠 思维导图查看器初始化...");
     
-    // 1. 处理图片列表，添加章节号和URL
+    // 1. 处理图片列表，添加章节号和URL - 使用正确的URL格式
     state.images = imageFiles.map((filename) => {
-        const chapterNum = parseInt(filename.replace('.png', '')); // 直接提取数字
+        const chapterNum = parseInt(filename.replace('.png', ''));
         return {
             name: chapterNames[filename] || filename, // 使用映射的中文名
             number: chapterNum,
-            url: `https://raw.githubusercontent.com/huohuo87635/mindmap-viewer/main/${filename}`,
-            backupUrl: `https://huohuo87635.github.io/mindmap-viewer/${filename}`,
-            filename: filename // 保存实际文件名
+            // 使用正确的URL格式：blob链接 + raw=true参数
+            url: `https://github.com/huohuo87635/mindmap-viewer/blob/main/${filename}?raw=true`,
+            // 备用URL：添加时间戳避免缓存
+            backupUrl: `https://github.com/huohuo87635/mindmap-viewer/raw/main/${filename}?t=${Date.now()}`,
+            filename: filename
         };
     });
     
     console.log(`✅ 共 ${state.images.length} 张图片`);
     console.log("图片列表:", state.images.map(img => `${img.number}. ${img.name}`));
+    console.log("使用的URL格式: blob链接 + ?raw=true");
     
     // 2. 更新标题显示章节数
     chapterCounter.textContent = `共${state.images.length}章`;
@@ -570,12 +573,6 @@ function init() {
     console.log("✅ 初始化完成！");
 }
 
-// 提取章节号（简化版本）
-function extractChapterNumber(filename) {
-    const match = filename.match(/(\d+)\.png/);
-    return match ? parseInt(match[1]) : 0;
-}
-
 // ========== 渲染缩略图 ==========
 function renderThumbnails() {
     thumbnailsContainer.innerHTML = '';
@@ -585,7 +582,7 @@ function renderThumbnails() {
         thumbnail.className = `thumbnail-item ${index === state.currentIndex ? 'active' : ''}`;
         thumbnail.dataset.index = index;
         
-        // 使用data-src延迟加载
+        // 使用data-src延迟加载 - 也使用相同的URL格式
         thumbnail.innerHTML = `
             <img class="thumbnail-img" 
                  data-src="${img.url}" 
@@ -631,7 +628,12 @@ function loadImage(index) {
     
     // 更新大图
     console.log(`📥 加载图片: ${img.name} (${img.filename})`);
-    currentImage.src = img.url;
+    
+    // 添加时间戳避免缓存
+    const mainUrl = img.url + (img.url.includes('?') ? '&' : '?') + 't=' + Date.now();
+    const backupUrl = img.backupUrl;
+    
+    currentImage.src = mainUrl;
     currentImage.alt = img.name;
     
     // 图片加载成功
@@ -642,13 +644,16 @@ function loadImage(index) {
     
     // 图片加载失败
     currentImage.onerror = function() {
-        console.error(`❌ 主URL加载失败，尝试备用URL: ${img.backupUrl}`);
-        currentImage.src = img.backupUrl;
+        console.error(`❌ 主URL加载失败，尝试备用URL`);
+        currentImage.src = backupUrl;
         
         currentImage.onerror = function() {
             console.error(`❌ 备用URL也失败`);
             currentImage.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">❌</text></svg>';
-            alert(`无法加载图片：${img.name}\n\n文件名：${img.filename}\n请检查GitHub仓库中是否存在该文件。`);
+            alert(`无法加载图片：${img.name}\n\n` +
+                  `文件名：${img.filename}\n` +
+                  `已尝试URL：\n1. ${mainUrl}\n2. ${backupUrl}\n\n` +
+                  `请确保GitHub仓库中有该文件。`);
         };
     };
     
@@ -816,7 +821,7 @@ document.addEventListener('DOMContentLoaded', init);
 
 // 控制台提示
 console.log("🚀 民俗学思维导图查看器已加载");
-console.log("📚 使用数字文件名：01.png - 16.png");
+console.log("📚 使用正确的URL格式：blob链接 + ?raw=true");
 console.log("✨ 功能：高清查看、缩放、拖拽、全屏");
 console.log("🎯 访问地址: https://huohuo87635.github.io/mindmap-viewer/");
     </script>
