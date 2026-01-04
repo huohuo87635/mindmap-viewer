@@ -475,12 +475,29 @@
     </div>
 
     <script>
-// ========== 万能自动加载代码 ==========
-// 无需手动配置图片列表，自动获取GitHub仓库所有PNG文件
+// ========== 使用100%正确的文件名 ==========
+const imageFiles = [
+    "第一章 概述.png",
+    "第二章 物质生产民俗.png",
+    "第三章 物质生活民俗.png",
+    "第四章 社会组织民俗.png",
+    "第五章 岁时节日民俗.png",
+    "第六章：人生仪礼.png",
+    "第七章 民俗信仰.png",
+    "第八章 民间科学技术.png",
+    "第九章 民间口头文学（上）.png",
+    "第十章 民间口头文学（下）.png",
+    "第十一章 民间语言.png",
+    "第十二章 民间艺术.png",
+    "第十三章 民间游戏娱乐.png",
+    "第十四章 中国民俗学史略.png",
+    "第十五章 外国民俗学概况.png",
+    "第十六章 民俗学研究方法.png"
+];
 
-// 状态管理
+// ========== 状态管理 ==========
 const state = {
-    images: [],          // 图片列表（自动获取）
+    images: [],          // 处理后的图片列表
     currentIndex: 0,     // 当前显示的图片索引
     scale: 1,            // 缩放比例
     translateX: 0,       // X轴位移
@@ -506,97 +523,23 @@ const fullscreenBtn = document.getElementById('fullscreenBtn');
 const chapterCounter = document.getElementById('chapterCounter');
 const controlPanel = document.querySelector('.control-panel');
 
-// ========== 核心功能：自动获取所有图片文件 ==========
-async function loadAllImageFiles() {
-    console.log("🚀 正在从GitHub仓库获取所有图片...");
-    
-    try {
-        // 使用GitHub API获取仓库所有文件
-        const apiUrl = 'https://api.github.com/repos/huohuo87635/mindmap-viewer/contents';
-        const response = await fetch(apiUrl);
-        
-        if (!response.ok) {
-            throw new Error(`GitHub API请求失败: ${response.status}`);
-        }
-        
-        const files = await response.json();
-        
-        // 过滤出图片文件
-        const imageFiles = files.filter(file => {
-            const name = file.name.toLowerCase();
-            return (name.endsWith('.png') || name.endsWith('.jpg') || name.endsWith('.jpeg')) && 
-                   file.type === 'file';
-        });
-        
-        if (imageFiles.length === 0) {
-            throw new Error("未找到任何图片文件！请确保PNG/JPG图片已上传到GitHub仓库。");
-        }
-        
-        console.log(`✅ 找到 ${imageFiles.length} 张图片`);
-        
-        // 为每个文件提取章节号并排序
-        const images = imageFiles.map(file => {
-            const chapterNum = extractChapterNumber(file.name);
-            return {
-                name: file.name,
-                number: chapterNum,
-                url: file.download_url || `https://raw.githubusercontent.com/huohuo87635/mindmap-viewer/main/${encodeURIComponent(file.name)}`
-            };
-        }).filter(img => img.number > 0) // 过滤掉无法识别的
-          .sort((a, b) => a.number - b.number); // 按章节号排序
-        
-        console.log("排序后的图片列表:", images.map(img => `${img.number}. ${img.name}`));
-        
-        return images;
-        
-    } catch (error) {
-        console.error('❌ 获取图片失败:', error);
-        showError(`图片加载失败: ${error.message}<br><br>请检查：<br>1. 图片是否已上传到GitHub<br>2. 网络连接是否正常<br>3. 图片文件名是否包含"第X章"字样`);
-        return [];
-    }
-}
-
-// 提取章节号
-function extractChapterNumber(filename) {
-    // 匹配中文数字：第一章、第二章...
-    const chineseMatch = filename.match(/第([零一二三四五六七八九十百千]+)章/);
-    if (chineseMatch) {
-        const chineseNum = chineseMatch[1];
-        const map = {
-            '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
-            '六': 6, '七': 7, '八': 8, '九': 9, '十': 10,
-            '十一': 11, '十二': 12, '十三': 13, '十四': 14,
-            '十五': 15, '十六': 16
-        };
-        return map[chineseNum] || 0;
-    }
-    
-    // 尝试匹配阿拉伯数字：第1章、第2章...
-    const arabicMatch = filename.match(/第(\d+)章/);
-    if (arabicMatch) {
-        return parseInt(arabicMatch[1], 10);
-    }
-    
-    return 0; // 无法识别
-}
-
-// 显示错误信息
-function showError(message) {
-    currentTitle.innerHTML = `<span style="color: #e74c3c;">❌ ${message}</span>`;
-    thumbnailsContainer.innerHTML = `<div style="color: #e74c3c; padding: 20px; text-align: center;">${message}</div>`;
-}
-
 // ========== 初始化函数 ==========
-async function init() {
+function init() {
     console.log("🧠 思维导图查看器初始化...");
     
-    // 1. 获取所有图片
-    state.images = await loadAllImageFiles();
+    // 1. 处理图片列表，添加章节号和URL
+    state.images = imageFiles.map((filename) => {
+        const chapterNum = extractChapterNumber(filename);
+        return {
+            name: filename,
+            number: chapterNum,
+            url: `https://raw.githubusercontent.com/huohuo87635/mindmap-viewer/main/${encodeURIComponent(filename)}`,
+            backupUrl: `https://huohuo87635.github.io/mindmap-viewer/${encodeURIComponent(filename)}`
+        };
+    }).sort((a, b) => a.number - b.number); // 按章节号排序
     
-    if (state.images.length === 0) {
-        chapterCounter.textContent = "加载失败";
-        return;
-    }
+    console.log(`✅ 共 ${state.images.length} 张图片`);
+    console.log("排序后的图片列表:", state.images.map(img => `${img.number}. ${img.name}`));
     
     // 2. 更新标题显示章节数
     chapterCounter.textContent = `共${state.images.length}章`;
@@ -613,18 +556,32 @@ async function init() {
     controlPanel.style.opacity = '1';
     controlPanel.style.pointerEvents = 'auto';
     
+    // 6. 绑定事件监听器
+    setupEventListeners();
+    
     console.log("✅ 初始化完成！");
-    console.log("📸 可用图片:", state.images.map(img => img.name));
+}
+
+// 提取章节号
+function extractChapterNumber(filename) {
+    // 匹配中文数字：第一章、第二章...
+    const match = filename.match(/第([零一二三四五六七八九十]+)章/);
+    if (match) {
+        const chineseNum = match[1];
+        const map = {
+            '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
+            '六': 6, '七': 7, '八': 8, '九': 9, '十': 10,
+            '十一': 11, '十二': 12, '十三': 13, '十四': 14,
+            '十五': 15, '十六': 16
+        };
+        return map[chineseNum] || 0;
+    }
+    return 0;
 }
 
 // ========== 渲染缩略图 ==========
 function renderThumbnails() {
     thumbnailsContainer.innerHTML = '';
-    
-    if (state.images.length === 0) {
-        thumbnailsContainer.innerHTML = '<div class="loading">未找到图片文件</div>';
-        return;
-    }
     
     state.images.forEach((img, index) => {
         const thumbnail = document.createElement('div');
@@ -635,10 +592,10 @@ function renderThumbnails() {
         thumbnail.innerHTML = `
             <img class="thumbnail-img" 
                  data-src="${img.url}" 
-                 alt="${img.name.replace('.png', '').replace('.jpg', '').replace('.jpeg', '')}"
+                 alt="${img.name.replace('.png', '')}"
                  loading="lazy"
                  onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><text y=\".9em\" font-size=\"90\">📷</text></svg>'">
-            <div class="thumbnail-name">${img.name.replace('.png', '').replace('.jpg', '').replace('.jpeg', '')}</div>
+            <div class="thumbnail-name">${img.name.replace('.png', '')}</div>
             <div class="thumbnail-number">第${img.number}章</div>
         `;
         
@@ -650,7 +607,7 @@ function renderThumbnails() {
         
         thumbnailsContainer.appendChild(thumbnail);
         
-        // 延迟加载缩略图
+        // 立即加载缩略图
         setTimeout(() => {
             const imgElement = thumbnail.querySelector('.thumbnail-img');
             if (imgElement && imgElement.dataset.src) {
@@ -662,8 +619,6 @@ function renderThumbnails() {
 
 // ========== 加载图片 ==========
 function loadImage(index) {
-    if (state.images.length === 0 || index < 0 || index >= state.images.length) return;
-    
     state.currentIndex = index;
     const img = state.images[index];
     
@@ -676,39 +631,32 @@ function loadImage(index) {
     // 显示图片
     currentImage.style.display = 'block';
     currentImage.style.opacity = '0.5';
-    currentImage.style.transform = 'scale(0.95)';
     
     // 更新大图
     console.log(`📥 加载图片: ${img.name}`);
     currentImage.src = img.url;
     currentImage.alt = img.name;
     
-    // 图片加载完成后的回调
+    // 图片加载成功
     currentImage.onload = function() {
         currentImage.style.opacity = '1';
-        currentImage.style.transform = 'scale(1)';
         console.log(`✅ 图片加载成功: ${img.name}`);
     };
     
+    // 图片加载失败
     currentImage.onerror = function() {
-        console.error(`❌ 图片加载失败: ${img.url}`);
-        currentImage.style.opacity = '1';
-        currentImage.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">❌</text></svg>';
+        console.error(`❌ 主URL加载失败，尝试备用URL: ${img.backupUrl}`);
+        currentImage.src = img.backupUrl;
         
-        // 尝试备用URL
-        const backupUrl = `https://huohuo87635.github.io/mindmap-viewer/${encodeURIComponent(img.name)}`;
-        console.log(`🔄 尝试备用URL: ${backupUrl}`);
-        
-        const backupImg = new Image();
-        backupImg.onload = () => {
-            currentImage.src = backupUrl;
-            console.log(`✅ 备用URL加载成功`);
+        currentImage.onerror = function() {
+            console.error(`❌ 备用URL也失败`);
+            currentImage.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">❌</text></svg>';
+            alert(`无法加载图片：${img.name}\n\n请直接访问图片链接检查：\n${img.url}`);
         };
-        backupImg.src = backupUrl;
     };
     
     // 更新标题
-    currentTitle.textContent = img.name.replace('.png', '').replace('.jpg', '').replace('.jpeg', '');
+    currentTitle.textContent = img.name.replace('.png', '');
     
     // 重置视图
     resetTransform();
@@ -751,26 +699,22 @@ function resetTransform() {
 function setupEventListeners() {
     // 缩放按钮
     zoomInBtn.addEventListener('click', () => {
-        if (state.images.length === 0) return;
         state.scale = Math.min(state.scale * 1.3, 10);
         applyTransform();
     });
 
     zoomOutBtn.addEventListener('click', () => {
-        if (state.images.length === 0) return;
         state.scale = Math.max(state.scale * 0.7, 0.1);
         applyTransform();
     });
 
     // 导航按钮
     prevBtn.addEventListener('click', () => {
-        if (state.images.length === 0) return;
         const newIndex = (state.currentIndex - 1 + state.images.length) % state.images.length;
         loadImage(newIndex);
     });
 
     nextBtn.addEventListener('click', () => {
-        if (state.images.length === 0) return;
         const newIndex = (state.currentIndex + 1) % state.images.length;
         loadImage(newIndex);
     });
@@ -780,7 +724,6 @@ function setupEventListeners() {
 
     // 全屏按钮
     fullscreenBtn.addEventListener('click', () => {
-        if (state.images.length === 0) return;
         if (!document.fullscreenElement) {
             imageContainer.requestFullscreen().catch(err => {
                 console.log(`全屏请求失败: ${err.message}`);
@@ -792,7 +735,6 @@ function setupEventListeners() {
 
     // 鼠标拖拽
     imageContainer.addEventListener('mousedown', (e) => {
-        if (state.images.length === 0) return;
         if (e.button !== 0) return;
         
         state.isDragging = true;
@@ -803,7 +745,7 @@ function setupEventListeners() {
     });
 
     document.addEventListener('mousemove', (e) => {
-        if (!state.isDragging || state.images.length === 0) return;
+        if (!state.isDragging) return;
         
         state.translateX = e.clientX - state.startX;
         state.translateY = e.clientY - state.startY;
@@ -817,7 +759,6 @@ function setupEventListeners() {
 
     // 鼠标滚轮缩放
     imageContainer.addEventListener('wheel', (e) => {
-        if (state.images.length === 0) return;
         e.preventDefault();
         
         const rect = imageContainer.getBoundingClientRect();
@@ -838,8 +779,6 @@ function setupEventListeners() {
 
     // 键盘快捷键
     document.addEventListener('keydown', (e) => {
-        if (state.images.length === 0) return;
-        
         switch(e.key) {
             case 'ArrowLeft':
                 e.preventDefault();
@@ -876,19 +815,13 @@ function setupEventListeners() {
 }
 
 // ========== 启动应用 ==========
-document.addEventListener('DOMContentLoaded', async function() {
-    await init();
-    setupEventListeners();
-});
+document.addEventListener('DOMContentLoaded', init);
 
 // 控制台提示
-console.log("🚀 万能思维导图查看器已加载");
-console.log("✨ 功能特点：");
-console.log("1. 自动获取GitHub仓库所有PNG/JPG图片");
-console.log("2. 智能识别章节号并排序");
-console.log("3. 支持拖拽、缩放、全屏");
-console.log("4. 键盘快捷键支持");
-console.log("🎯 网站地址: https://mindmap-viewer.vercel.app");
+console.log("🚀 民俗学思维导图查看器已加载");
+console.log("📚 使用100%正确的文件名");
+console.log("✨ 功能：高清查看、缩放、拖拽、全屏");
+console.log("🎯 访问地址: https://mindmap-viewer.vercel.app");
     </script>
 </body>
 </html>
