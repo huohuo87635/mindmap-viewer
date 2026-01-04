@@ -18,7 +18,6 @@
             min-height: 100vh;
             padding: 20px;
             line-height: 1.6;
-            overflow-x: hidden;
         }
         
         .container {
@@ -65,7 +64,6 @@
             box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
         }
         
-        /* 缩略图区域 */
         .thumbnail-section {
             margin-bottom: 30px;
         }
@@ -137,7 +135,6 @@
             margin-top: 5px;
         }
         
-        /* 高清查看区域 */
         .viewer-section {
             background: #1a1a2e;
             border-radius: 20px;
@@ -184,7 +181,6 @@
             pointer-events: none;
         }
         
-        /* 控制面板 */
         .control-panel {
             position: absolute;
             bottom: 30px;
@@ -266,7 +262,6 @@
             border-radius: 25px;
         }
         
-        /* 操作说明 */
         .instructions {
             background: #f8f9fa;
             border-radius: 15px;
@@ -302,7 +297,6 @@
             top: -2px;
         }
         
-        /* 键盘快捷键提示 */
         .shortcuts {
             display: flex;
             flex-wrap: wrap;
@@ -330,7 +324,6 @@
             font-weight: bold;
         }
         
-        /* 响应式设计 */
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -373,10 +366,6 @@
                 height: 44px;
                 font-size: 22px;
             }
-            
-            .thumbnails-container {
-                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            }
         }
         
         @media (max-width: 480px) {
@@ -388,28 +377,14 @@
                 flex-direction: column;
                 gap: 10px;
                 border-radius: 15px;
-                width: 95%;
-                padding: 12px;
             }
             
             .control-group {
                 border-right: none !important;
                 padding-right: 0 !important;
-                width: 100%;
-                justify-content: center;
-            }
-            
-            .image-container {
-                height: 50vh;
-                min-height: 300px;
-            }
-            
-            body {
-                padding: 10px;
             }
         }
         
-        /* 加载提示 */
         .loading-overlay {
             position: absolute;
             top: 0;
@@ -464,11 +439,6 @@
             margin-top: 15px;
             cursor: pointer;
             font-weight: bold;
-            transition: all 0.3s;
-        }
-        
-        .retry-btn:hover {
-            background: #f8f9fa;
         }
     </style>
 </head>
@@ -480,18 +450,16 @@
             <div class="chapter-counter" id="chapterCounter">正在加载...</div>
         </header>
         
-        <!-- 缩略图区域 -->
         <section class="thumbnail-section">
             <h2 class="thumbnail-title">所有章节</h2>
             <div class="thumbnails-container" id="thumbnailsContainer">
                 <div class="loading" style="text-align: center; padding: 40px; color: #666;">
                     <div style="font-size: 24px; margin-bottom: 10px;">⏳</div>
-                    正在从GitHub加载图片...
+                    正在加载图片列表...
                 </div>
             </div>
         </section>
         
-        <!-- 高清查看区域 -->
         <section class="viewer-section">
             <h2 class="viewer-title" id="currentTitle">请等待图片加载完成</h2>
             
@@ -535,7 +503,6 @@
             </div>
         </section>
         
-        <!-- 操作说明 -->
         <div class="instructions">
             <h3>操作说明</h3>
             <div class="instruction-item"><strong>查看图片：</strong>点击上方的缩略图查看高清大图</div>
@@ -556,652 +523,508 @@
     </div>
 
     <script>
-        // ========== 配置部分 ==========
-        const CONFIG = {
-            imageFiles: [
-                "01.png", "02.png", "03.png", "04.png", "05.png",
-                "06.png", "07.png", "08.png", "09.png", "10.png",
-                "11.png", "12.png", "13.png", "14.png", "15.png", "16.png"
-            ],
-            chapterNames: {
-                "01.png": "第一章 概述",
-                "02.png": "第二章 物质生产民俗", 
-                "03.png": "第三章 物质生活民俗",
-                "04.png": "第四章 社会组织民俗",
-                "05.png": "第五章 节日民间习俗",
-                "06.png": "第六章 人生仪礼",
-                "07.png": "第七章 民俗信仰",
-                "08.png": "第八章 民间科学技术",
-                "09.png": "第九章 民间文学（上）",
-                "10.png": "第十章 民间文学（下）",
-                "11.png": "第十二章 民间语言",
-                "12.png": "第十二章 民间艺术",
-                "13.png": "第十三章 民间游戏娱乐",
-                "14.png": "第十四章 中国民俗学史略",
-                "15.png": "第十五章 外国民俗学概况",
-                "16.png": "第十六章 民俗学研究方法"
-            },
-            maxRetries: 3,           // 最大重试次数
-            retryDelay: 1000,        // 重试延迟（毫秒）
-            timeout: 15000           // 加载超时时间（毫秒）
+        // ========== 核心配置 ==========
+        const IMAGE_FILES = [
+            "01.png", "02.png", "03.png", "04.png", "05.png",
+            "06.png", "07.png", "08.png", "09.png", "10.png",
+            "11.png", "12.png", "13.png", "14.png", "15.png", "16.png"
+        ];
+
+        const CHAPTER_NAMES = {
+            "01.png": "第一章 概述",
+            "02.png": "第二章 物质生产民俗", 
+            "03.png": "第三章 物质生活民俗",
+            "04.png": "第四章 社会组织民俗",
+            "05.png": "第五章 节日民间习俗",
+            "06.png": "第六章 人生仪礼",
+            "07.png": "第七章 民俗信仰",
+            "08.png": "第八章 民间科学技术",
+            "09.png": "第九章 民间文学（上）",
+            "10.png": "第十章 民间文学（下）",
+            "11.png": "第十一章 民间语言",
+            "12.png": "第十二章 民间艺术",
+            "13.png": "第十三章 民间游戏娱乐",
+            "14.png": "第十四章 中国民俗学史略",
+            "15.png": "第十五章 外国民俗学概况",
+            "16.png": "第十六章 民俗学研究方法"
         };
 
         // ========== 状态管理 ==========
-        const state = {
-            images: [],
-            currentIndex: 0,
-            scale: 1,
-            translateX: 0,
-            translateY: 0,
-            isDragging: false,
-            startX: 0,
-            startY: 0,
-            lastTouchDistance: 0,
-            isLoading: false,
-            touchStartTime: 0,
-            isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-        };
-
-        // ========== DOM元素缓存 ==========
-        const elements = {
-            thumbnailsContainer: document.getElementById('thumbnailsContainer'),
-            currentTitle: document.getElementById('currentTitle'),
-            currentImage: document.getElementById('currentImage'),
-            imageContainer: document.getElementById('imageContainer'),
-            zoomDisplay: document.getElementById('zoomDisplay'),
-            pageIndicator: document.getElementById('pageIndicator'),
-            zoomInBtn: document.getElementById('zoomInBtn'),
-            zoomOutBtn: document.getElementById('zoomOutBtn'),
-            prevBtn: document.getElementById('prevBtn'),
-            nextBtn: document.getElementById('nextBtn'),
-            resetBtn: document.getElementById('resetBtn'),
-            fullscreenBtn: document.getElementById('fullscreenBtn'),
-            chapterCounter: document.getElementById('chapterCounter'),
-            controlPanel: document.querySelector('.control-panel'),
-            loadingOverlay: document.getElementById('loadingOverlay')
-        };
+        let currentImageIndex = 0;
+        let imageScale = 1;
+        let translateX = 0;
+        let translateY = 0;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let isLoading = false;
+        let imageList = [];
 
         // ========== 初始化应用 ==========
         function initApp() {
-            console.log('🚀 开始初始化应用...');
-            console.log(`📱 设备类型: ${state.isMobile ? '移动设备' : '桌面设备'}`);
+            console.log('🚀 查看器初始化...');
             
-            // 1. 准备图片数据
-            prepareImageData();
-            
-            // 2. 更新章节计数
-            updateChapterCounter();
-            
-            // 3. 渲染缩略图
-            renderThumbnails();
-            
-            // 4. 绑定事件监听器
-            setupEventListeners();
-            
-            // 5. 启用控制面板
-            enableControlPanel();
-            
-            // 6. 加载第一张图片
-            if (state.images.length > 0) {
-                loadImage(0);
-            }
-            
-            console.log('✅ 应用初始化完成');
-        }
-
-        // ========== 准备图片数据 ==========
-        function prepareImageData() {
-            state.images = CONFIG.imageFiles.map((filename, index) => {
+            // 创建图片数据列表
+            imageList = IMAGE_FILES.map((filename, index) => {
                 const chapterNum = parseInt(filename.replace('.png', ''));
-                const baseUrl = 'https://raw.githubusercontent.com/huohuo87635/mindmap-viewer/main/';
+                
+                // !!! 重要：使用国内可访问的CDN链接 !!!
+                // 使用 jsDelivr CDN，国内访问速度快
+                const imageUrl = `https://cdn.jsdelivr.net/gh/huohuo87635/mindmap-viewer@main/${filename}`;
+                
+                // 备用链接（GitHub Pages）
+                const backupUrl = `https://huohuo87635.github.io/mindmap-viewer/${filename}`;
                 
                 return {
                     id: index + 1,
-                    name: CONFIG.chapterNames[filename] || `第${chapterNum}章`,
+                    name: CHAPTER_NAMES[filename] || `第${chapterNum}章`,
                     number: chapterNum,
                     filename: filename,
-                    url: baseUrl + filename,  // 使用稳定的raw.githubusercontent.com
-                    retryCount: 0
+                    url: imageUrl,          // 主链接：jsDelivr CDN
+                    backupUrl: backupUrl    // 备用链接
                 };
             });
             
-            console.log(`📷 已准备 ${state.images.length} 张图片数据`);
-        }
-
-        // ========== 更新章节计数 ==========
-        function updateChapterCounter() {
-            elements.chapterCounter.textContent = `共${state.images.length}章`;
+            console.log('📷 图片URL已生成，使用jsDelivr CDN');
+            
+            // 更新章节计数
+            document.getElementById('chapterCounter').textContent = `共${imageList.length}章`;
+            
+            // 渲染缩略图
+            renderThumbnails();
+            
+            // 启用控制面板
+            document.querySelector('.control-panel').style.opacity = '1';
+            document.querySelector('.control-panel').style.pointerEvents = 'auto';
+            
+            // 绑定事件
+            bindEvents();
+            
+            // 加载第一张图片
+            if (imageList.length > 0) {
+                setTimeout(() => loadImage(0), 300);
+            }
+            
+            console.log('✅ 初始化完成');
         }
 
         // ========== 渲染缩略图 ==========
         function renderThumbnails() {
-            elements.thumbnailsContainer.innerHTML = '';
+            const container = document.getElementById('thumbnailsContainer');
+            container.innerHTML = '';
             
-            state.images.forEach((img, index) => {
-                const thumbnail = document.createElement('div');
-                thumbnail.className = `thumbnail-item ${index === state.currentIndex ? 'active' : ''}`;
-                thumbnail.dataset.index = index;
+            imageList.forEach((image, index) => {
+                const item = document.createElement('div');
+                item.className = `thumbnail-item ${index === currentImageIndex ? 'active' : ''}`;
+                item.dataset.index = index;
                 
-                thumbnail.innerHTML = `
-                    <div class="thumbnail-img-placeholder">
-                        <span>第${img.number}章</span>
+                // 先显示占位符
+                item.innerHTML = `
+                    <div class="thumbnail-placeholder" style="
+                        width: 100%;
+                        height: 120px;
+                        background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+                        border-radius: 8px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #3498db;
+                        font-size: 24px;
+                        margin-bottom: 10px;
+                    ">
+                        📖
                     </div>
-                    <div class="thumbnail-name">${img.name}</div>
-                    <div class="thumbnail-number">第${img.number}章</div>
+                    <div class="thumbnail-name">${image.name}</div>
+                    <div class="thumbnail-number">第${image.number}章</div>
                 `;
                 
                 // 点击事件
-                thumbnail.addEventListener('click', () => {
-                    if (!state.isLoading) {
+                item.addEventListener('click', () => {
+                    if (!isLoading) {
                         loadImage(index);
-                        updateActiveThumbnail(index);
-                        
-                        // 移动端：滚动到查看区域
-                        if (state.isMobile) {
-                            elements.imageContainer.scrollIntoView({ 
-                                behavior: 'smooth',
-                                block: 'start'
-                            });
-                        }
+                        setActiveThumbnail(index);
                     }
                 });
                 
-                // 触摸事件（移动端优化）
-                thumbnail.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    thumbnail.style.transform = 'scale(0.95)';
-                }, { passive: false });
+                container.appendChild(item);
                 
-                thumbnail.addEventListener('touchend', () => {
-                    thumbnail.style.transform = '';
-                });
-                
-                elements.thumbnailsContainer.appendChild(thumbnail);
-                
-                // 延迟加载真实缩略图
-                setTimeout(() => loadThumbnailImage(thumbnail, img), index * 100);
+                // 延迟加载缩略图图片
+                setTimeout(() => loadThumbnailImage(item, image), index * 150);
             });
         }
 
         // ========== 加载缩略图图片 ==========
-        function loadThumbnailImage(thumbnail, img) {
-            const placeholder = thumbnail.querySelector('.thumbnail-img-placeholder');
+        function loadThumbnailImage(container, imageData) {
+            const placeholder = container.querySelector('.thumbnail-placeholder');
             if (!placeholder) return;
             
-            const imgElement = document.createElement('img');
-            imgElement.className = 'thumbnail-img';
-            imgElement.alt = img.name;
-            imgElement.loading = 'lazy';
+            const img = new Image();
+            img.className = 'thumbnail-img';
+            img.alt = imageData.name;
+            img.loading = 'lazy';
             
-            imgElement.onload = () => {
-                placeholder.replaceWith(imgElement);
+            img.onload = function() {
+                placeholder.replaceWith(img);
             };
             
-            imgElement.onerror = () => {
-                console.warn(`缩略图加载失败: ${img.filename}`);
-                placeholder.innerHTML = `<span style="color: #666;">📷<br>加载失败</span>`;
+            img.onerror = function() {
+                // 如果主链接失败，尝试备用链接
+                console.log(`缩略图加载失败，尝试备用链接: ${imageData.filename}`);
+                img.src = imageData.backupUrl + '?retry=' + Date.now();
             };
             
-            // 使用带时间戳的URL避免缓存
-            imgElement.src = img.url + '?t=' + Date.now();
+            // 使用jsDelivr CDN链接
+            img.src = imageData.url + '?thumb=true&t=' + Date.now();
         }
 
-        // ========== 加载高清图片（核心功能）==========
-        function loadImage(index, retryCount = 0) {
-            if (state.isLoading || index < 0 || index >= state.images.length) {
-                return;
-            }
+        // ========== 加载高清图片 ==========
+        function loadImage(index) {
+            if (isLoading || index < 0 || index >= imageList.length) return;
             
-            state.currentIndex = index;
-            state.isLoading = true;
-            const img = state.images[index];
+            isLoading = true;
+            currentImageIndex = index;
+            const imageData = imageList[index];
             
-            console.log(`📥 加载图片: ${img.name} (尝试 ${retryCount + 1}/${CONFIG.maxRetries})`);
+            console.log(`📥 加载图片: ${imageData.name}`);
             
             // 显示加载状态
-            showLoadingState(true);
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const currentImage = document.getElementById('currentImage');
             
-            // 更新UI
-            updateUIForLoading(img);
+            loadingOverlay.style.display = 'flex';
+            currentImage.style.display = 'none';
             
-            // 创建Image对象预加载
+            // 更新标题
+            document.getElementById('currentTitle').textContent = `正在加载: ${imageData.name}`;
+            
+            // 创建图片加载器
             const imageLoader = new Image();
             imageLoader.crossOrigin = 'anonymous';
             
-            // 设置超时
-            const timeoutId = setTimeout(() => {
-                handleImageLoadError(imageLoader, img, retryCount, '加载超时');
-            }, CONFIG.timeout);
+            let retryCount = 0;
+            const maxRetries = 2;
             
-            // 加载成功
-            imageLoader.onload = () => {
-                clearTimeout(timeoutId);
-                handleImageLoadSuccess(imageLoader, img);
-            };
+            function attemptLoad() {
+                // 主链接：jsDelivr CDN
+                const url = retryCount === 0 ? 
+                    imageData.url + '?t=' + Date.now() : 
+                    imageData.backupUrl + '?t=' + Date.now();
+                
+                console.log(`尝试加载 (${retryCount + 1}/${maxRetries + 1}): ${url.substring(0, 60)}...`);
+                
+                const timeout = setTimeout(() => {
+                    console.warn('加载超时');
+                    handleLoadError();
+                }, 10000);
+                
+                imageLoader.onload = function() {
+                    clearTimeout(timeout);
+                    handleLoadSuccess(this.src);
+                };
+                
+                imageLoader.onerror = function() {
+                    clearTimeout(timeout);
+                    handleLoadError();
+                };
+                
+                imageLoader.src = url;
+            }
             
-            // 加载失败
-            imageLoader.onerror = () => {
-                clearTimeout(timeoutId);
-                handleImageLoadError(imageLoader, img, retryCount, '加载失败');
-            };
-            
-            // 开始加载（添加时间戳避免缓存）
-            imageLoader.src = img.url + '?t=' + Date.now() + '&v=' + Math.random();
-        }
-
-        // ========== 图片加载成功处理 ==========
-        function handleImageLoadSuccess(imageLoader, img) {
-            console.log(`✅ 图片加载成功: ${img.name}`);
-            
-            // 更新显示图片
-            elements.currentImage.src = imageLoader.src;
-            elements.currentImage.alt = img.name;
-            elements.currentImage.style.display = 'block';
-            
-            // 淡入效果
-            elements.currentImage.style.opacity = '0';
-            setTimeout(() => {
-                elements.currentImage.style.opacity = '1';
-                showLoadingState(false);
-            }, 50);
-            
-            // 更新UI
-            updateUIForLoadedImage(img);
-            
-            // 重置状态
-            state.isLoading = false;
-            img.retryCount = 0;
-        }
-
-        // ========== 图片加载失败处理 ==========
-        function handleImageLoadError(imageLoader, img, retryCount, errorMsg) {
-            console.warn(`❌ ${errorMsg}: ${img.name}`);
-            
-            // 清除事件监听器
-            imageLoader.onload = imageLoader.onerror = null;
-            
-            if (retryCount < CONFIG.maxRetries - 1) {
-                // 重试
-                console.log(`🔄 准备重试 (${retryCount + 1}/${CONFIG.maxRetries})`);
+            function handleLoadSuccess(src) {
+                console.log(`✅ 图片加载成功: ${imageData.name}`);
+                
+                currentImage.src = src;
+                currentImage.alt = imageData.name;
+                currentImage.style.display = 'block';
+                currentImage.style.opacity = '0';
+                
+                // 淡入效果
                 setTimeout(() => {
-                    loadImage(state.currentIndex, retryCount + 1);
-                }, CONFIG.retryDelay * (retryCount + 1));
-            } else {
-                // 显示错误
-                showErrorState(img, errorMsg);
-                state.isLoading = false;
+                    currentImage.style.opacity = '1';
+                    loadingOverlay.style.display = 'none';
+                }, 50);
+                
+                // 更新UI
+                updateImageUI(imageData);
+                
+                isLoading = false;
             }
+            
+            function handleLoadError() {
+                retryCount++;
+                
+                if (retryCount <= maxRetries) {
+                    console.log(`🔄 重试加载 (${retryCount}/${maxRetries})`);
+                    setTimeout(attemptLoad, 1000);
+                } else {
+                    console.error(`❌ 图片加载失败: ${imageData.name}`);
+                    showImageError(imageData);
+                    isLoading = false;
+                }
+            }
+            
+            // 开始加载
+            attemptLoad();
         }
 
-        // ========== 显示/隐藏加载状态 ==========
-        function showLoadingState(show) {
-            if (elements.loadingOverlay) {
-                elements.loadingOverlay.style.display = show ? 'flex' : 'none';
-            }
-        }
-
-        // ========== 显示错误状态 ==========
-        function showErrorState(img, errorMsg) {
+        // ========== 显示图片加载错误 ==========
+        function showImageError(imageData) {
+            const imageContainer = document.getElementById('imageContainer');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            
+            loadingOverlay.style.display = 'none';
+            
+            // 移除旧的错误提示
+            const oldError = imageContainer.querySelector('.error-message');
+            if (oldError) oldError.remove();
+            
+            // 创建错误提示
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-message';
             errorDiv.innerHTML = `
-                <div style="font-size: 48px; margin-bottom: 10px;">😢</div>
-                <div style="font-size: 18px; margin-bottom: 10px;"><strong>${errorMsg}</strong></div>
-                <div style="margin-bottom: 10px;">${img.name}</div>
-                <button class="retry-btn" onclick="retryCurrentImage()">重试加载</button>
+                <div style="font-size: 40px; margin-bottom: 10px;">😢</div>
+                <div style="font-size: 18px; margin-bottom: 10px;">图片加载失败</div>
+                <div style="margin-bottom: 10px;">${imageData.name}</div>
+                <div style="font-size: 14px; margin-bottom: 20px; opacity: 0.7;">
+                    请检查网络连接后重试
+                </div>
+                <button class="retry-btn" onclick="retryCurrentImage()">点击重试</button>
             `;
             
-            // 移除之前的错误提示
-            const oldError = elements.imageContainer.querySelector('.error-message');
-            if (oldError) oldError.remove();
-            
-            elements.imageContainer.appendChild(errorDiv);
-            showLoadingState(false);
+            imageContainer.appendChild(errorDiv);
         }
 
         // ========== 重试当前图片 ==========
         function retryCurrentImage() {
-            const errorDiv = elements.imageContainer.querySelector('.error-message');
+            const imageContainer = document.getElementById('imageContainer');
+            const errorDiv = imageContainer.querySelector('.error-message');
             if (errorDiv) errorDiv.remove();
             
-            loadImage(state.currentIndex);
+            loadImage(currentImageIndex);
         }
 
-        // ========== 更新加载中的UI ==========
-        function updateUIForLoading(img) {
-            elements.currentTitle.textContent = `正在加载: ${img.name}`;
-            elements.currentImage.style.display = 'none';
-        }
-
-        // ========== 更新加载完成后的UI ==========
-        function updateUIForLoadedImage(img) {
+        // ========== 更新图片UI ==========
+        function updateImageUI(imageData) {
             // 更新标题
-            elements.currentTitle.textContent = img.name;
+            document.getElementById('currentTitle').textContent = imageData.name;
             
             // 更新页面指示器
-            updatePageIndicator();
+            document.getElementById('pageIndicator').textContent = 
+                `${currentImageIndex + 1} / ${imageList.length}`;
             
             // 更新激活的缩略图
-            updateActiveThumbnail(state.currentIndex);
+            setActiveThumbnail(currentImageIndex);
             
             // 重置视图
-            resetTransform();
+            resetView();
         }
 
-        // ========== 更新页面指示器 ==========
-        function updatePageIndicator() {
-            const current = state.currentIndex + 1;
-            const total = state.images.length;
-            elements.pageIndicator.textContent = `${current} / ${total}`;
-        }
-
-        // ========== 更新激活的缩略图 ==========
-        function updateActiveThumbnail(index) {
+        // ========== 设置激活的缩略图 ==========
+        function setActiveThumbnail(index) {
             document.querySelectorAll('.thumbnail-item').forEach((item, i) => {
                 item.classList.toggle('active', i === index);
             });
         }
 
-        // ========== 图片变换相关 ==========
+        // ========== 视图控制 ==========
         function applyTransform() {
-            elements.currentImage.style.transform = 
-                `translate(${state.translateX}px, ${state.translateY}px) scale(${state.scale})`;
-            elements.zoomDisplay.textContent = `${Math.round(state.scale * 100)}%`;
+            const currentImage = document.getElementById('currentImage');
+            if (currentImage) {
+                currentImage.style.transform = 
+                    `translate(${translateX}px, ${translateY}px) scale(${imageScale})`;
+            }
+            
+            document.getElementById('zoomDisplay').textContent = `${Math.round(imageScale * 100)}%`;
         }
 
-        function resetTransform() {
-            state.scale = 1;
-            state.translateX = 0;
-            state.translateY = 0;
+        function resetView() {
+            imageScale = 1;
+            translateX = 0;
+            translateY = 0;
             applyTransform();
         }
 
-        // ========== 缩放功能 ==========
-        function handleZoom(delta, centerX, centerY) {
-            const newScale = state.scale * delta;
-            if (newScale < 0.1 || newScale > 10) return;
-            
-            // 计算缩放中心偏移
-            const rect = elements.imageContainer.getBoundingClientRect();
-            const relativeX = centerX - rect.left - rect.width / 2;
-            const relativeY = centerY - rect.top - rect.height / 2;
-            
-            const scaleDiff = newScale - state.scale;
-            state.translateX -= (relativeX * scaleDiff) / state.scale;
-            state.translateY -= (relativeY * scaleDiff) / state.scale;
-            
-            state.scale = newScale;
+        function zoomIn() {
+            imageScale = Math.min(imageScale * 1.3, 10);
             applyTransform();
         }
 
-        // ========== 导航功能 ==========
-        function navigateToPrev() {
-            if (state.isLoading) return;
-            const newIndex = (state.currentIndex - 1 + state.images.length) % state.images.length;
+        function zoomOut() {
+            imageScale = Math.max(imageScale * 0.7, 0.1);
+            applyTransform();
+        }
+
+        function prevImage() {
+            if (isLoading) return;
+            const newIndex = (currentImageIndex - 1 + imageList.length) % imageList.length;
             loadImage(newIndex);
         }
 
-        function navigateToNext() {
-            if (state.isLoading) return;
-            const newIndex = (state.currentIndex + 1) % state.images.length;
+        function nextImage() {
+            if (isLoading) return;
+            const newIndex = (currentImageIndex + 1) % imageList.length;
             loadImage(newIndex);
         }
 
-        // ========== 全屏功能 ==========
+        // ========== 绑定事件 ==========
+        function bindEvents() {
+            // 控制按钮
+            document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
+            document.getElementById('zoomOutBtn').addEventListener('click', zoomOut);
+            document.getElementById('prevBtn').addEventListener('click', prevImage);
+            document.getElementById('nextBtn').addEventListener('click', nextImage);
+            document.getElementById('resetBtn').addEventListener('click', resetView);
+            document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+            
+            // 鼠标拖拽
+            setupMouseDrag();
+            
+            // 触摸事件（移动端）
+            setupTouchEvents();
+            
+            // 滚轮缩放
+            document.getElementById('imageContainer').addEventListener('wheel', function(e) {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                imageScale = Math.max(0.1, Math.min(10, imageScale * delta));
+                applyTransform();
+            });
+            
+            // 键盘快捷键
+            document.addEventListener('keydown', function(e) {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+                
+                switch(e.key) {
+                    case 'ArrowLeft': prevImage(); break;
+                    case 'ArrowRight': nextImage(); break;
+                    case '+': case '=': zoomIn(); break;
+                    case '-': zoomOut(); break;
+                    case '0': resetView(); break;
+                    case 'f': case 'F': toggleFullscreen(); break;
+                }
+            });
+        }
+
+        function setupMouseDrag() {
+            const container = document.getElementById('imageContainer');
+            
+            container.addEventListener('mousedown', function(e) {
+                if (e.button !== 0) return;
+                
+                isDragging = true;
+                dragStartX = e.clientX - translateX;
+                dragStartY = e.clientY - translateY;
+                container.classList.add('grabbing');
+                e.preventDefault();
+            });
+            
+            document.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                
+                translateX = e.clientX - dragStartX;
+                translateY = e.clientY - dragStartY;
+                applyTransform();
+            });
+            
+            document.addEventListener('mouseup', function() {
+                isDragging = false;
+                container.classList.remove('grabbing');
+            });
+        }
+
+        function setupTouchEvents() {
+            const container = document.getElementById('imageContainer');
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let isTouchMove = false;
+            
+            container.addEventListener('touchstart', function(e) {
+                if (e.touches.length === 1) {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                    isTouchMove = true;
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
+            container.addEventListener('touchmove', function(e) {
+                if (isTouchMove && e.touches.length === 1) {
+                    const touch = e.touches[0];
+                    const deltaX = touch.clientX - touchStartX;
+                    const deltaY = touch.clientY - touchStartY;
+                    
+                    translateX += deltaX;
+                    translateY += deltaY;
+                    applyTransform();
+                    
+                    touchStartX = touch.clientX;
+                    touchStartY = touch.clientY;
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
+            container.addEventListener('touchend', function() {
+                isTouchMove = false;
+            });
+        }
+
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {
-                    console.warn('全屏请求失败:', err);
+                    console.log('全屏请求失败:', err);
                 });
             } else {
                 document.exitFullscreen();
             }
         }
 
-        // ========== 启用控制面板 ==========
-        function enableControlPanel() {
-            elements.controlPanel.style.opacity = '1';
-            elements.controlPanel.style.pointerEvents = 'auto';
-        }
-
-        // ========== 事件监听器设置 ==========
-        function setupEventListeners() {
-            // 按钮事件
-            elements.zoomInBtn.addEventListener('click', () => handleZoom(1.3, 
-                window.innerWidth / 2, window.innerHeight / 2));
-            elements.zoomOutBtn.addEventListener('click', () => handleZoom(0.7, 
-                window.innerWidth / 2, window.innerHeight / 2));
-            elements.prevBtn.addEventListener('click', navigateToPrev);
-            elements.nextBtn.addEventListener('click', navigateToNext);
-            elements.resetBtn.addEventListener('click', resetTransform);
-            elements.fullscreenBtn.addEventListener('click', toggleFullscreen);
-            
-            // 鼠标拖拽
-            setupMouseDragEvents();
-            
-            // 触摸事件（移动端）
-            setupTouchEvents();
-            
-            // 滚轮缩放
-            setupWheelEvents();
-            
-            // 键盘快捷键
-            setupKeyboardEvents();
-            
-            // 窗口大小变化
-            window.addEventListener('resize', handleWindowResize);
-            
-            // 全屏变化
-            document.addEventListener('fullscreenchange', handleFullscreenChange);
-        }
-
-        // ========== 鼠标拖拽事件 ==========
-        function setupMouseDragEvents() {
-            elements.imageContainer.addEventListener('mousedown', (e) => {
-                if (e.button !== 0 || state.isMobile) return;
-                
-                state.isDragging = true;
-                state.startX = e.clientX - state.translateX;
-                state.startY = e.clientY - state.translateY;
-                elements.imageContainer.classList.add('grabbing');
-                e.preventDefault();
-            });
-
-            document.addEventListener('mousemove', (e) => {
-                if (!state.isDragging || state.isMobile) return;
-                
-                state.translateX = e.clientX - state.startX;
-                state.translateY = e.clientY - state.startY;
-                applyTransform();
-            });
-
-            document.addEventListener('mouseup', () => {
-                state.isDragging = false;
-                elements.imageContainer.classList.remove('grabbing');
-            });
-        }
-
-        // ========== 触摸事件（移动端专用）==========
-        function setupTouchEvents() {
-            if (!state.isMobile) return;
-            
-            let touchStartX = 0;
-            let touchStartY = 0;
-            let isTouchMove = false;
-            
-            // 触摸开始
-            elements.imageContainer.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1) {
-                    const touch = e.touches[0];
-                    touchStartX = touch.clientX;
-                    touchStartY = touch.clientY;
-                    isTouchMove = true;
-                    state.touchStartTime = Date.now();
-                } else if (e.touches.length === 2) {
-                    // 双指缩放开始
-                    const touch1 = e.touches[0];
-                    const touch2 = e.touches[1];
-                    state.lastTouchDistance = Math.hypot(
-                        touch1.clientX - touch2.clientX,
-                        touch1.clientY - touch2.clientY
-                    );
-                }
-                e.preventDefault();
-            }, { passive: false });
-            
-            // 触摸移动
-            elements.imageContainer.addEventListener('touchmove', (e) => {
-                if (isTouchMove && e.touches.length === 1) {
-                    const touch = e.touches[0];
-                    const deltaX = touch.clientX - touchStartX;
-                    const deltaY = touch.clientY - touchStartY;
-                    
-                    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
-                        state.translateX += deltaX * 0.8;
-                        state.translateY += deltaY * 0.8;
-                        applyTransform();
-                        
-                        touchStartX = touch.clientX;
-                        touchStartY = touch.clientY;
-                    }
-                } else if (e.touches.length === 2) {
-                    // 双指缩放
-                    const touch1 = e.touches[0];
-                    const touch2 = e.touches[1];
-                    const currentDistance = Math.hypot(
-                        touch1.clientX - touch2.clientX,
-                        touch1.clientY - touch2.clientY
-                    );
-                    
-                    if (state.lastTouchDistance > 0) {
-                        const scaleFactor = currentDistance / state.lastTouchDistance;
-                        const centerX = (touch1.clientX + touch2.clientX) / 2;
-                        const centerY = (touch1.clientY + touch2.clientY) / 2;
-                        handleZoom(scaleFactor, centerX, centerY);
-                    }
-                    
-                    state.lastTouchDistance = currentDistance;
-                }
-                e.preventDefault();
-            }, { passive: false });
-            
-            // 触摸结束
-            elements.imageContainer.addEventListener('touchend', (e) => {
-                if (isTouchMove && state.touchStartTime) {
-                    const touchDuration = Date.now() - state.touchStartTime;
-                    const touch = e.changedTouches[0];
-                    const deltaX = touch.clientX - touchStartX;
-                    
-                    // 快速滑动切换
-                    if (touchDuration < 300 && Math.abs(deltaX) > 50) {
-                        if (deltaX > 0) {
-                            navigateToPrev();
-                        } else {
-                            navigateToNext();
-                        }
-                    }
-                }
-                
-                isTouchMove = false;
-                state.lastTouchDistance = 0;
-                state.touchStartTime = 0;
-            });
-        }
-
-        // ========== 滚轮缩放事件 ==========
-        function setupWheelEvents() {
-            elements.imageContainer.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                const delta = e.deltaY > 0 ? 0.9 : 1.1;
-                handleZoom(delta, e.clientX, e.clientY);
-            }, { passive: false });
-        }
-
-        // ========== 键盘快捷键 ==========
-        function setupKeyboardEvents() {
-            document.addEventListener('keydown', (e) => {
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-                
-                switch(e.key) {
-                    case 'ArrowLeft':
-                        e.preventDefault();
-                        navigateToPrev();
-                        break;
-                    case 'ArrowRight':
-                        e.preventDefault();
-                        navigateToNext();
-                        break;
-                    case '+':
-                    case '=':
-                        e.preventDefault();
-                        handleZoom(1.3, window.innerWidth / 2, window.innerHeight / 2);
-                        break;
-                    case '-':
-                        e.preventDefault();
-                        handleZoom(0.7, window.innerWidth / 2, window.innerHeight / 2);
-                        break;
-                    case '0':
-                        e.preventDefault();
-                        resetTransform();
-                        break;
-                    case 'f':
-                    case 'F':
-                        e.preventDefault();
-                        toggleFullscreen();
-                        break;
-                    case 'Escape':
-                        if (document.fullscreenElement) {
-                            document.exitFullscreen();
-                        }
-                        break;
-                }
-            });
-        }
-
-        // ========== 窗口大小变化处理 ==========
-        function handleWindowResize() {
-            // 重置缩放和位置
-            resetTransform();
-            
-            // 更新移动设备检测
-            state.isMobile = window.innerWidth <= 768;
-        }
-
-        // ========== 全屏变化处理 ==========
-        function handleFullscreenChange() {
-            // 全屏状态变化时重置视图
-            setTimeout(resetTransform, 100);
-        }
-
         // ========== 启动应用 ==========
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('📄 DOM加载完成，开始初始化应用...');
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 DOM加载完成，开始初始化...');
             setTimeout(initApp, 100);
         });
 
-        // ========== 错误处理 ==========
-        window.addEventListener('error', (e) => {
-            console.error('🚨 全局错误:', e.error);
-            showErrorState(state.images[state.currentIndex], '程序错误: ' + e.message);
+        // ========== 网络状态检测 ==========
+        window.addEventListener('offline', function() {
+            console.warn('📶 网络连接已断开');
+            showNetworkMessage('网络连接已断开，请检查网络');
         });
 
-        // ========== 离线处理 ==========
-        window.addEventListener('offline', () => {
-            console.warn('🌐 网络连接已断开');
-            showErrorState(state.images[state.currentIndex], '网络连接已断开');
+        window.addEventListener('online', function() {
+            console.log('📶 网络连接已恢复');
+            // 网络恢复后自动重试当前图片
+            retryCurrentImage();
         });
 
-        window.addEventListener('online', () => {
-            console.log('🌐 网络连接已恢复');
-            if (state.currentIndex >= 0) {
-                loadImage(state.currentIndex);
-            }
-        });
+        function showNetworkMessage(message) {
+            const container = document.getElementById('imageContainer');
+            const msgDiv = document.createElement('div');
+            msgDiv.style.cssText = `
+                position: absolute;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(52, 152, 219, 0.9);
+                color: white;
+                padding: 10px 20px;
+                border-radius: 5px;
+                z-index: 1001;
+            `;
+            msgDiv.textContent = message;
+            container.appendChild(msgDiv);
+            
+            setTimeout(() => {
+                if (msgDiv.parentNode) {
+                    msgDiv.parentNode.removeChild(msgDiv);
+                }
+            }, 3000);
+        }
 
         // 控制台提示
-        console.log('✨ 民俗学思维导图高清查看器已加载');
-        console.log('📱 移动端优化版本');
-        console.log('🚀 功能: 高清查看、缩放拖拽、章节导航、全屏');
+        console.log('✨ 民俗学思维导图高清查看器');
+        console.log('🚀 国内优化版 - 使用jsDelivr CDN');
+        console.log('📱 完美支持手机和电脑');
+        console.log('🎯 图片高清无压缩，加载速度快');
     </script>
 </body>
 </html>
